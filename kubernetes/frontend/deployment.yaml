@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: {{ namespace | default("default") }}
+  labels:
+    app: fullstack
+    tier: frontend
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: fullstack
+      tier: frontend
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: fullstack
+        tier: frontend
+    spec:
+      containers:
+      - name: frontend
+        image: {{ docker_registry }}/frontend:{{ version }}
+        ports:
+        - containerPort: 80
+        env:
+        - name: API_BASE_URL
+          value: "http://backend-service.{{ namespace | default('default') }}.svc.cluster.local:8080"
+        resources:
+          requests:
+            cpu: "300m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5

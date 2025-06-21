@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-service
+  namespace: {{ namespace | default("default") }}
+  labels:
+    app: fullstack
+    tier: frontend
+spec:
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: fullstack
+    tier: frontend
+  type: LoadBalancer  # Or ClusterIP if using Ingress
