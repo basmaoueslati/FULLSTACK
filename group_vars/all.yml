@@ -1,11 +1,18 @@
-# Database Configuration
-mysql_database_name: "appdb"
-mysql_version: "8.0"
-mysql_storage_class: "standard"
-mysql_storage_size: "5Gi"
+# Global Settings
+kube_namespace: "fullstack-app"
+docker_registry: "nexus.yourcompany.com"
 
-# Resource defaults
+# MySQL Configuration
+mysql_version: "8.0"
+mysql_database_name: "appdb"
+mysql_storage_size: "5Gi"
+mysql_storage_class: "standard"
+
+# Service Ports
+backend_service_port: 8080
+frontend_service_port: 80
+
+# Resource Defaults
 mysql_cpu_request: "500m"
-mysql_memory_request: "1Gi"
-mysql_cpu_limit: "1000m"
-mysql_memory_limit: "2Gi"
+backend_cpu_request: "1000m"
+frontend_cpu_request: "500m"
