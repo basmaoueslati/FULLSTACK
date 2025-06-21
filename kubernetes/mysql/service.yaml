@@ -1,0 +1,17 @@
+# kubernetes/1-mysql/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  namespace: {{ namespace | default("default") }}
+  labels:
+    app: fullstack
+    tier: database
+spec:
+  ports:
+  - port: 3306
+    targetPort: 3306
+  selector:
+    app: fullstack
+    tier: database
+  clusterIP: None  # Important for StatefulSets, optional here

@@ -1,0 +1,16 @@
+# kubernetes/1-mysql/pvc.yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  namespace: {{ namespace | default("default") }}
+  labels:
+    app: fullstack
+    tier: database
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi  # Adjust based on your needs
+  storageClassName: standard # Modify if using a specific storage class

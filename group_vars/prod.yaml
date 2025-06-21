@@ -1,0 +1,5 @@
+mysql_storage_size: "20Gi"
+mysql_cpu_request: "1000m"
+mysql_memory_request: "2Gi"
+mysql_cpu_limit: "2000m"
+mysql_memory_limit: "4Gi"

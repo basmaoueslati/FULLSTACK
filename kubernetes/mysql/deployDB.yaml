@@ -1,0 +1,158 @@
+---
+- name: Deploy MySQL to Kubernetes
+  hosts: k8s_master
+  vars_files:
+    - "{{ inventory_dir }}/../group_vars/all.yml"
+    - "{{ inventory_dir }}/../group_vars/{{ environment }}.yml"
+  
+  tasks:
+    - name: Ensure namespace exists
+      k8s:
+        api_version: v1
+        kind: Namespace
+        name: "{{ kube_namespace }}"
+        state: present
+
+    - name: Create MySQL secrets
+      k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: mysql-secrets
+            namespace: "{{ kube_namespace }}"
+          type: Opaque
+          data:
+            root-password: "{{ mysql_root_password | b64encode }}"
+            username: "{{ mysql_app_user | b64encode }}"
+            password: "{{ mysql_app_password | b64encode }}"
+      no_log: true  # Prevents secret values from being logged
+
+    - name: Deploy MySQL PVC
+      k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: mysql-pvc
+            namespace: "{{ kube_namespace }}"
+            labels:
+              app: fullstack
+              tier: database
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: "{{ mysql_storage_size | default('5Gi') }}"
+            storageClassName: "{{ mysql_storage_class | default('standard') }}"
+
+    - name: Deploy MySQL Service
+      k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: mysql-service
+            namespace: "{{ kube_namespace }}"
+            labels:
+              app: fullstack
+              tier: database
+          spec:
+            ports:
+            - port: 3306
+              targetPort: 3306
+            selector:
+              app: fullstack
+              tier: database
+            clusterIP: None
+
+    - name: Deploy MySQL
+      k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: mysql
+            namespace: "{{ kube_namespace }}"
+            labels:
+              app: fullstack
+              tier: database
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: fullstack
+                tier: database
+            strategy:
+              type: Recreate
+            template:
+              metadata:
+                labels:
+                  app: fullstack
+                  tier: database
+              spec:
+                containers:
+                - name: mysql
+                  image: "mysql:{{ mysql_version | default('8.0') }}"
+                  ports:
+                  - containerPort: 3306
+                  env:
+                  - name: MYSQL_ROOT_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: mysql-secrets
+                        key: root-password
+                  - name: MYSQL_DATABASE
+                    value: "{{ mysql_database_name | default('appdb') }}"
+                  - name: MYSQL_USER
+                    valueFrom:
+                      secretKeyRef:
+                        name: mysql-secrets
+                        key: username
+                  - name: MYSQL_PASSWORD
+                    valueFrom:
+                      secretKeyRef:
+                        name: mysql-secrets
+                        key: password
+                  volumeMounts:
+                  - name: mysql-persistent-storage
+                    mountPath: /var/lib/mysql
+                  resources:
+                    requests:
+                      cpu: "{{ mysql_cpu_request | default('500m') }}"
+                      memory: "{{ mysql_memory_request | default('1Gi') }}"
+                    limits:
+                      cpu: "{{ mysql_cpu_limit | default('1000m') }}"
+                      memory: "{{ mysql_memory_limit | default('2Gi') }}"
+                  livenessProbe:
+                    exec:
+                      command:
+                      - mysqladmin
+                      - ping
+                    initialDelaySeconds: 30
+                    periodSeconds: 10
+                    timeoutSeconds: 5
+                  readinessProbe:
+                    exec:
+                      command:
+                      - mysqladmin
+                      - ping
+                    initialDelaySeconds: 5
+                    periodSeconds: 5
+                    timeoutSeconds: 3
+                volumes:
+                - name: mysql-persistent-storage
+                  persistentVolumeClaim:
+                    claimName: mysql-pvc
+
+    - name: Verify MySQL deployment
+      command: >
+        kubectl -n {{ kube_namespace }} rollout status deployment/mysql --timeout=300s
+      register: rollout_result
+      failed_when: rollout_result.rc != 0
+      changed_when: False

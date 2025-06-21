@@ -1,0 +1,11 @@
+# Database Configuration
+mysql_database_name: "appdb"
+mysql_version: "8.0"
+mysql_storage_class: "standard"
+mysql_storage_size: "5Gi"
+
+# Resource defaults
+mysql_cpu_request: "500m"
+mysql_memory_request: "1Gi"
+mysql_cpu_limit: "1000m"
+mysql_memory_limit: "2Gi"
