@@ -19,17 +19,17 @@ pipeline {
         stage('Start MySQL for Tests') {
                 steps {
                     sh '''
-                        docker run -d --name mysql-test \
-                          -e MYSQL_ROOT_PASSWORD=root \
-                          -e MYSQL_DATABASE=mydb \
-                          -p 3306:3306 \
-                          mysql:8.0
-            
-                        echo "Waiting for MySQL to be ready..."
-                        for i in {1..10}; do
-                          docker exec mysql-test mysqladmin ping -h localhost && break
-                          sleep 3
-                        done
+                    docker run -d --name mysql-test \
+                      -e MYSQL_ROOT_PASSWORD=root \
+                      -e MYSQL_DATABASE=mydb \
+                      -p 3306:3306 \
+                      mysql:8.0
+                    
+                    echo "Waiting for MySQL to be available..."
+                    for i in {1..20}; do
+                      docker exec mysql-test mysql -uroot -e "SHOW DATABASES;" && break
+                      sleep 3
+                    done
                     '''
                 }
             }
@@ -38,8 +38,8 @@ pipeline {
         stage('Build & Test Backend') {
             steps {
                 dir('backend_app') {
-                    sh 'mvn clean package'
-                    sh 'mvn test'
+                    sh 'mvn clean package -Dspring.profiles.active=dev'
+                    sh 'mvn test -Dspring.profiles.active=dev'
                 }
             }
         }
@@ -108,12 +108,13 @@ pipeline {
             }
         }
     }
-    post {
-        always {
-            cleanWs()
-        }
-        failure {
-            slackSend channel: '#alerts', message: "Build ${currentBuild.currentResult}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-        }
-    }
+            post {
+                always {
+                    sh 'docker rm -f mysql-test || true'
+                    cleanWs()
+                }
+                failure {
+                    slackSend channel: '#alerts', message: "Build ${currentBuild.currentResult}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
+                }
+            }
 }
