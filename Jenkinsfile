@@ -37,13 +37,15 @@ pipeline {
                 }
             }
 
-        
-        stage('Build & Test Backend') {
+
+        stage('Build Backend') {
             steps {
-                dir('backend_app') {
-                    sh 'mvn clean package -Dspring.profiles.active=dev'
-                    sh 'mvn test -Dspring.profiles.active=dev'
-                }
+                sh 'mvn clean package -DskipTests=true'
+            }
+        }
+        stage('Test Backend') {
+            steps {
+                sh 'mvn test'
             }
         }
         
@@ -51,15 +53,21 @@ pipeline {
             parallel {
                 stage('SonarQube Backend') {
                     steps {
-                        withSonarQubeEnv('sonar-server') {
-                            sh 'mvn sonar:sonar'
+                        dir('backend_app'){
+                        withSonarQubeEnv('SonarQube') {
+                     sh '''
+                       mvn clean verify sonar:sonar \
+                      -Dsonar.projectKey= backend \
+
+                       '''
                         }
+                    }
                     }
                 }
                 stage('SonarQube Frontend') {
                     steps {
                         dir('frontend') {
-                            withSonarQubeEnv('sonar-server') {
+                            withSonarQubeEnv('SonarQube') {
                                 sh 'sonar-scanner -Dsonar.projectKey=frontend'
                             }
                         }
