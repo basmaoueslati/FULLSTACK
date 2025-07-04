@@ -19,7 +19,7 @@ pipeline {
         
         stage('Build & Test Backend') {
             steps {
-                dir('backend') {
+                dir('backend_app') {
                     sh 'mvn clean package'
                     sh 'mvn test'
                 }
