@@ -4,6 +4,9 @@ pipeline {
         DOCKER_REGISTRY = '35.180.88.60'
         KUBE_NAMESPACE = 'fullstack-app'
         VERSION = "${env.BUILD_ID}-${env.GIT_COMMIT.take(8)}"
+        REPO_URL = "git@github.com:basmaoueslati/FULLSTACK.git"  
+        BRANCH_NAME = "main" 
+  
     }
     stages {
         // CI PHASE
@@ -111,7 +114,6 @@ pipeline {
             post {
                 always {
                     sh 'docker rm -f mysql-test || true'
-                    cleanWs()
                 }
                 failure {
                     slackSend channel: '#alerts', message: "Build ${currentBuild.currentResult}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
