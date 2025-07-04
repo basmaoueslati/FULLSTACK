@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        DOCKER_REGISTRY = 35.180.88.60
+        DOCKER_REGISTRY = '35.180.88.60'
         KUBE_NAMESPACE = 'fullstack-app'
         VERSION = "${env.BUILD_ID}-${env.GIT_COMMIT.take(8)}"
     }
