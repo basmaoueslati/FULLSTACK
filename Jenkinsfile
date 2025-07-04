@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        DOCKER_REGISTRY = 'nexus.yourcompany.com'
+        DOCKER_REGISTRY = 35.180.88.60
         KUBE_NAMESPACE = 'fullstack-app'
         VERSION = "${env.BUILD_ID}-${env.GIT_COMMIT.take(8)}"
     }
@@ -12,7 +12,7 @@ pipeline {
                 dir('frontend') {
                     sh 'npm ci'
                     sh 'npm run build'
-                    sh 'xvfb-run npm test'
+                    sh 'xvfb-run ng test --watch=false --browsers=ChromeHeadlessNoSandbox'
                 }
             }
         }
