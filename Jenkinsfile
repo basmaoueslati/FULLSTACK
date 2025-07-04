@@ -23,16 +23,12 @@ pipeline {
                 steps {
                     sh '''
                     docker run -d --name mysql-test \
-                      -e MYSQL_ROOT_PASSWORD=root \
+                      -e MYSQL_ROOT_PASSWORD="" \
                       -e MYSQL_DATABASE=mydb \
                       -p 3306:3306 \
                       mysql:8.0
                     
-                    echo "Waiting for MySQL to be available..."
-                    for i in {1..20}; do
-                      docker exec mysql-test mysql -uroot -e "SHOW DATABASES;" && break
-                      sleep 3
-                    done
+                    sh 'mvn test -Dspring.profiles.active=dev'
                     '''
                 }
             }
