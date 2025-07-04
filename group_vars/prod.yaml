@@ -4,4 +4,4 @@ mysql_cpu_request: "2000m"
 
 # Ingress Configuration
 deploy_ingress: true
-ingress_host: "app.yourcompany.com"
+ingress_host: "fullstack.ghazelatech.com"
