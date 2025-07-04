@@ -1,10 +1,10 @@
 # Global Settings
 kube_namespace: "fullstack-app"
-docker_registry: "nexus.yourcompany.com"
+docker_registry: "172.31.9.239"
 
 # MySQL Configuration
 mysql_version: "8.0"
-mysql_database_name: "appdb"
+mysql_database_name: "mydb"
 mysql_storage_size: "5Gi"
 mysql_storage_class: "standard"
 
