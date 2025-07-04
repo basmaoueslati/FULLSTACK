@@ -48,19 +48,19 @@
         - name: Deploy MySQL PVC
           k8s:
             state: present
-            src: "{{ playbook_dir }}/../../kubernetes/1-mysql/pvc.yaml"
+            src: "{{ playbook_dir }}/../../kubernetes/mysql/pvc.yaml"
             namespace: "{{ kube_namespace }}"
 
         - name: Deploy MySQL Service
           k8s:
             state: present
-            src: "{{ playbook_dir }}/../../kubernetes/1-mysql/service.yaml"
+            src: "{{ playbook_dir }}/../../kubernetes/mysql/service.yaml"
             namespace: "{{ kube_namespace }}"
 
         - name: Deploy MySQL
           k8s:
             state: present
-            src: "{{ playbook_dir }}/../../kubernetes/1-mysql/deployment.yaml"
+            src: "{{ playbook_dir }}/../../kubernetes/mysql/deployment.yaml"
             namespace: "{{ kube_namespace }}"
             definition:
               spec:
@@ -108,13 +108,13 @@
         - name: Deploy Backend Service
           k8s:
             state: present
-            src: "{{ playbook_dir }}/../../kubernetes/2-backend/service.yaml"
+            src: "{{ playbook_dir }}/../../kubernetes/backend/service.yaml"
             namespace: "{{ kube_namespace }}"
 
         - name: Deploy Backend
           k8s:
             state: present
-            src: "{{ playbook_dir }}/../../kubernetes/2-backend/deployment.yaml"
+            src: "{{ playbook_dir }}/../../kubernetes/backend/deployment.yaml"
             namespace: "{{ kube_namespace }}"
             definition:
               spec:
@@ -141,13 +141,13 @@
         - name: Deploy Frontend Service
           k8s:
             state: present
-            src: "{{ playbook_dir }}/../../kubernetes/3-frontend/service.yaml"
+            src: "{{ playbook_dir }}/../../kubernetes/frontend/service.yaml"
             namespace: "{{ kube_namespace }}"
 
         - name: Deploy Frontend
           k8s:
             state: present
-            src: "{{ playbook_dir }}/../../kubernetes/3-frontend/deployment.yaml"
+            src: "{{ playbook_dir }}/../../kubernetes/frontend/deployment.yaml"
             namespace: "{{ kube_namespace }}"
             definition:
               spec:
