@@ -2,7 +2,6 @@ apiVersion: v1
 kind: Service
 metadata:
   name: backend-service
-  namespace: {{ namespace | default("default") }}
   labels:
     app: fullstack
     tier: backend
