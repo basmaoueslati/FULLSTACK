@@ -12,7 +12,7 @@ pipeline {
                 dir('frontend') {
                     sh 'npm ci'
                     sh 'npm run build'
-                    sh 'xvfb-run ng test --watch=false --browsers=ChromeHeadlessNoSandbox'
+                    sh 'xvfb-run npx ng test --watch=false --browsers=ChromeHeadlessNoSandbox'
                 }
             }
         }
