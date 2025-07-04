@@ -16,6 +16,24 @@ pipeline {
                 }
             }
         }
+        stage('Start MySQL for Tests') {
+                steps {
+                    sh '''
+                        docker run -d --name mysql-test \
+                          -e MYSQL_ROOT_PASSWORD=root \
+                          -e MYSQL_DATABASE=mydb \
+                          -p 3306:3306 \
+                          mysql:8.0
+            
+                        echo "Waiting for MySQL to be ready..."
+                        for i in {1..10}; do
+                          docker exec mysql-test mysqladmin ping -h localhost && break
+                          sleep 3
+                        done
+                    '''
+                }
+            }
+
         
         stage('Build & Test Backend') {
             steps {
