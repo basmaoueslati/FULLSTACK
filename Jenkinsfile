@@ -12,7 +12,7 @@ pipeline {
                 dir('frontend') {
                     sh 'npm ci'
                     sh 'npm run build'
-                    sh 'npm test'
+                    sh 'xvfb-run npm test'
                 }
             }
         }
