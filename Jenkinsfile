@@ -40,12 +40,16 @@ pipeline {
 
         stage('Build Backend') {
             steps {
+                dir('backend_app'){
                 sh 'mvn clean package -DskipTests=true'
+                }
             }
         }
         stage('Test Backend') {
             steps {
+                dir('backend_app'){
                 sh 'mvn test'
+                }
             }
         }
         
