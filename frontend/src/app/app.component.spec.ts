@@ -31,4 +31,4 @@ describe('CustomerService', () => {
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.content span')?.textContent).toContain('frontend app is running!');
   });
-});
+
