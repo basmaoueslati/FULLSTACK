@@ -127,7 +127,7 @@ pipeline {
         }
         
         // CD PHASE
-               stage('Upload JAR to Nexus') {
+               stage('Upload backend to Nexus') {
             steps {
                 dir('backend_app') {
                     nexusArtifactUploader artifacts: [[
@@ -145,6 +145,26 @@ pipeline {
                 }
             }
         }
+             stage('Upload Frontend to Nexus') {
+    steps {
+        dir('frontend/dist') {
+            sh "tar -czf frontend-${NEXT_VERSION}.tar.gz *"
+        }
+        nexusArtifactUploader artifacts: [[
+            artifactId: 'frontend',
+            file: "frontend/dist/frontend-${NEXT_VERSION}.tar.gz",
+            type: 'tar.gz'
+        ]],
+        credentialsId: 'nexus',
+        groupId: 'com.example.frontend',
+        nexusUrl: '51.44.166.2:8081',
+        nexusVersion: 'nexus3',
+        protocol: 'http',
+        repository: 'frontend',
+        version: "${NEXT_VERSION}"
+    }
+}
+
                 stage('Docker Build & Push via Ansible') {
             steps {
                 withCredentials([
