@@ -6,6 +6,7 @@ pipeline {
         VERSION = "${env.BUILD_ID}-${env.GIT_COMMIT.take(8)}"
         REPO_URL = "git@github.com:basmaoueslati/FULLSTACK.git"  
         BRANCH_NAME = "main" 
+    }
          stages {     
         stage('Calculate Version') {
                     steps {
