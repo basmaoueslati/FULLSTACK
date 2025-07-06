@@ -75,23 +75,67 @@ pipeline {
         }
         
         // CD PHASE
-        stage('Build & Push Docker Images') {
+               stage('Upload JAR to Nexus') {
             steps {
-                script {
-                    // Build and push Frontend
-                    docker.build("${DOCKER_REGISTRY}/frontend:${VERSION}", "./frontend")
-                    docker.withRegistry('https://${DOCKER_REGISTRY}', 'nexus') {
-                        docker.image("${DOCKER_REGISTRY}/frontend:${VERSION}").push()
-                    }
-                    
-                    // Build and push Backend
-                    docker.build("${DOCKER_REGISTRY}/backend:${VERSION}", "./backend")
-                    docker.withRegistry('https://${DOCKER_REGISTRY}', 'nexus') {
-                        docker.image("${DOCKER_REGISTRY}/backend:${VERSION}").push()
-                    }
+                dir('backend_app') {
+                    nexusArtifactUploader artifacts: [[
+                        artifactId: 'backend-app',
+                        file: "target/demo-${VERSION}.jar",
+                        type: 'jar'
+                    ]],
+                    credentialsId: 'nexus',
+                    groupId: 'com.example',
+                    nexusUrl: '51.44.166.2:8081',
+                    nexusVersion: 'nexus3',
+                    protocol: 'http',
+                    repository: 'backend',
+                    version: "${VERSION}"
                 }
             }
         }
+                stage('Docker Build & Push via Ansible') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'docker',
+                        usernameVariable: 'DOCKER_USERNAME',
+                        passwordVariable: 'DOCKER_PASSWORD'
+                    )
+                ]) {
+                    sh """
+                        ansible-playbook ansible/playbook-delivery.yml \
+                        -e build_context=${WORKSPACE} \
+                        -e NEXT_VERSION=${VERSION}
+                    """
+                }
+            }
+        }
+                stage('Clean Old Docker Images') {
+            steps {
+                sh 'docker image prune -f'
+                sh '''
+                    docker images --filter=reference='basmaoueslati/*' --format '{{.ID}}' \
+                    | xargs -r docker rmi -f
+                '''
+            }
+        }
+      //  stage('Build & Push Docker Images') {
+        //    steps {
+          //      script {
+            //        // Build and push Frontend
+              //      docker.build("${DOCKER_REGISTRY}/frontend:${VERSION}", "./frontend")
+                //    docker.withRegistry('https://${DOCKER_REGISTRY}', 'nexus') {
+                  //      docker.image("${DOCKER_REGISTRY}/frontend:${VERSION}").push()
+                    //}
+                    
+                    // Build and push Backend
+                   // docker.build("${DOCKER_REGISTRY}/backend:${VERSION}", "./backend")
+                    //docker.withRegistry('https://${DOCKER_REGISTRY}', 'nexus') {
+                      //  docker.image("${DOCKER_REGISTRY}/backend:${VERSION}").push()
+                    //}
+                //}
+            ///}
+        //}
         
         stage('Deploy to Kubernetes') {
             when {
