@@ -62,6 +62,8 @@ pipeline {
                 }
     
         // CI PHASE
+             stage('Build & test'){
+                 parallel {
         stage('Build & Test Frontend') {
             steps {
                 dir('frontend') {
@@ -72,23 +74,19 @@ pipeline {
             }
         }
 
-        stage('Build Backend') {
-              steps {
-                dir('backend_app'){
-                sh 'mvn clean package -DskipTests=true'
-                }
-            }
-        }
-        stage('Test Backend') {
+        stage('Build & Test Backend') {
             environment {
                 SPRING_PROFILES_ACTIVE = 'test-no-db'
             }
-            steps {
-                dir('backend_app') {
-                    sh 'mvn test'
+              steps {
+                dir('backend_app'){
+                sh 'mvn clean package -DskipTests=true'
+                sh 'mvn test'
                 }
             }
         }
+                 }
+             }
         
         stage('Quality Gates') {
             parallel {
