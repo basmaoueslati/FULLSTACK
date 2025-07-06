@@ -32,12 +32,12 @@
     - name: Create standard StorageClass (if not exists)
       k8s:
         state: present
-        src: standard-storageclass.yaml
+        definition: "{{ lookup('file', playbook_dir + '/standard-storageclass.yaml') | from_yaml }}"
 
     - name: Create PersistentVolume for MySQL
       k8s:
         state: present
-        src: mysql-pv.yaml
+        definition: "{{ lookup('file', playbook_dir + '/mysql-pv.yaml') | from_yaml }}"
         
     - name: Deploy MySQL PVC
       kubernetes.core.k8s:
