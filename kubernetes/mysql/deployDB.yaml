@@ -42,6 +42,7 @@
           kind: Service
           metadata:
             name: mysql-service
+            namespace: "{{ kube_namespace }}"
             labels:
               app: fullstack
               tier: database
@@ -62,6 +63,7 @@
           kind: Deployment
           metadata:
             name: mysql
+            namespace: "{{ kube_namespace }}"
             labels:
               app: fullstack
               tier: database
