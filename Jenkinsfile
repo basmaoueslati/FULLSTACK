@@ -49,16 +49,17 @@ pipeline {
                 }
             }
         }
-        stage('Push Changes') {
-            steps {
-                sshagent(['github-ssh-key']) {  
-                    sh """
-                    git pull origin ${BRANCH_NAME} || true
-                    git push origin HEAD:${BRANCH_NAME}
-                    """
+                stage('Push Changes') {
+                    steps {
+                        sshagent(['github-ssh-key']) {
+                            sh '''
+                                git remote set-url origin git@github.com:basmaoueslati/FULLSTACK.git
+                                git pull origin ${BRANCH_NAME} || true
+                                git push origin HEAD:${BRANCH_NAME}
+                            '''
+                        }
+                    }
                 }
-            }
-        }
     
         // CI PHASE
         stage('Build & Test Frontend') {
