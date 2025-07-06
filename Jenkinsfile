@@ -189,27 +189,10 @@ pipeline {
                 '''
             }
         }
-      //  stage('Build & Push Docker Images') {
-        //    steps {
-          //      script {
-            //        // Build and push Frontend
-              //      docker.build("${DOCKER_REGISTRY}/frontend:${VERSION}", "./frontend")
-                //    docker.withRegistry('https://${DOCKER_REGISTRY}', 'nexus') {
-                  //      docker.image("${DOCKER_REGISTRY}/frontend:${VERSION}").push()
-                    //}
-                    
-                    // Build and push Backend
-                   // docker.build("${DOCKER_REGISTRY}/backend:${VERSION}", "./backend")
-                    //docker.withRegistry('https://${DOCKER_REGISTRY}', 'nexus') {
-                      //  docker.image("${DOCKER_REGISTRY}/backend:${VERSION}").push()
-                    //}
-                //}
-            ///}
-        //}
         
         stage('Deploy to Kubernetes') {
             when {
-                branch 'main' // Or your production branch
+                branch 'main'
             }
             steps {
                 // Use Ansible for deployment
