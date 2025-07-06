@@ -7,8 +7,8 @@
     docker_registry: "{{ lookup('env', 'DOCKER_REGISTRY') | default('basmaoueslati') }}"
     frontend_path: "{{ build_context }}/frontend"
     backend_path: "{{ build_context }}/backend_app"
-    frontend_image: "{{ docker_registry }}/fullstackproject:frontend-{{ image_tag }}"
-    backend_image: "{{ docker_registry }}/fullstackproject:backend-{{ image_tag }}"
+    frontend_image: "basmaoueslati/fullstackproject:frontend-{{ image_tag }}"
+    backend_image: "basmaoueslati/fullstackproject:backend-{{ image_tag }}"
 
   tasks:
     - name: Log in to Docker Hub
