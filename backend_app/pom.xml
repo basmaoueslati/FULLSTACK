@@ -13,12 +13,7 @@
 	<version>${revision}</version>
 	<name>demo</name>
 	<description>Demo project for Spring Boot</description>
-		<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>1.8</java.version>
-		<revision>0.0.1</revision> <!-- Default starting version -->
-	</properties>
+
 	<url/>
 	<licenses>
 		<license/>
@@ -33,8 +28,10 @@
 		<url/>
 	</scm>
 	<properties>
-		<java.version>17</java.version>
-	</properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<java.version>1.8</java.version>
+		<revision>0.0.1</revision> <!-- Default starting version -->	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
