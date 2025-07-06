@@ -195,17 +195,16 @@ pipeline {
                     steps {
                         ansiblePlaybook(
                             playbook: 'ansible/deploy-k8s.yaml',
-                            inventory: "ansible/inventories/${env.ENVIRONMENT}.ini",
+                            inventory: "ansible/dev.ini",
                             extras: """
                                 -e version=${NEXT_VERSION} \
-                                -e kube_namespace=${KUBE_NAMESPACE} \
                                 -e docker_registry=${DOCKER_REGISTRY}
                             """
                         )
                         // Optional rollout check
                         sh """
-                            kubectl -n ${KUBE_NAMESPACE} rollout status deployment/frontend --timeout=300s
-                            kubectl -n ${KUBE_NAMESPACE} rollout status deployment/backend --timeout=300s
+                            kubectl rollout status deployment/frontend --timeout=300s
+                            kubectl rollout status deployment/backend --timeout=300s
                         """
                     }
                 }
