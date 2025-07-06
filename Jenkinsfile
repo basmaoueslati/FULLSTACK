@@ -6,7 +6,58 @@ pipeline {
         VERSION = "${env.BUILD_ID}-${env.GIT_COMMIT.take(8)}"
         REPO_URL = "git@github.com:basmaoueslati/FULLSTACK.git"  
         BRANCH_NAME = "main" 
-  
+          
+        stage('Calculate Version') {
+                    steps {
+                        script {
+                      dir('backend_app') {
+
+                            // Read current version from POM
+                            CURRENT_VERSION = sh(
+                                script: 'mvn help:evaluate -Dexpression=revision -q -DforceStdout',
+                                returnStdout: true
+                            ).trim()
+                            
+                            // Parse and increment version
+                            def parts = CURRENT_VERSION.split('\\.')
+                            def newPatch = (parts[2] as Integer) + 1
+                            NEXT_VERSION = "${parts[0]}.${parts[1]}.${newPatch}"
+                            
+                            echo "Updating version: ${CURRENT_VERSION} → ${NEXT_VERSION}"
+                      }
+                        }
+                    }
+                }
+        // Set version in POM
+        stage('Set Version') {
+            steps {
+                dir('backend_app') {
+
+                sh "mvn versions:set-property -Dproperty=revision -DnewVersion=${NEXT_VERSION}"
+                sh "mvn versions:commit"
+                
+                sh """
+                # Configure Git user
+                git config --local user.email "basma.oueslati@gmail.com"
+                git config --local user.name "Jenkins"
+                
+                # Add and commit changes
+                git add pom.xml
+                git commit -m "Bump version to ${NEXT_VERSION}"
+                """
+                }
+            }
+        }
+        stage('Push Changes') {
+            steps {
+                sshagent(['github-ssh-key']) {  
+                    sh """
+                    git pull origin ${BRANCH_NAME} || true
+                    git push origin HEAD:${BRANCH_NAME}
+                    """
+                }
+            }
+        }
     }
     stages {
         // CI PHASE
