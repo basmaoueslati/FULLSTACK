@@ -1,215 +1,31 @@
 ---
-# ansible/deploy-k8s.yaml
-- name: Deploy Fullstack App to Kubernetes
-  hosts: kubernetes_master
-  vars_files:
-    - "{{ inventory_dir }}/../group_vars/all.yml"
-    - "{{ inventory_dir }}/../group_vars/{{ environment }}.yml"
-  
+- name: Deploy fullstack app to Kubernetes
+  hosts: localhost
+  connection: local
   tasks:
-    # ======================
-    # 1. PRE-DEPLOYMENT SETUP
-    # ======================
-    - name: Verify Kubernetes connectivity
-      k8s_info:
-        kind: Node
-      register: k8s_nodes
-      until: k8s_nodes.resources | length > 0
-      retries: 5
-      delay: 10
+    - name: Deploy MySQL stack
+      import_playbook: mysql/deployDB.yaml
 
-    - name: Create namespace
-      k8s:
-        api_version: v1
-        kind: Namespace
-        name: "{{ kube_namespace }}"
+    - name: Deploy backend
+      kubernetes.core.k8s:
         state: present
-
-    # ======================
-    # 2. MYSQL DEPLOYMENT
-    # ======================
-    - block:
-        - name: Create MySQL secrets
-          k8s:
-            state: present
-            definition:
-              apiVersion: v1
-              kind: Secret
-              metadata:
-                name: mysql-secrets
-                namespace: "{{ kube_namespace }}"
-              type: Opaque
-              data:
-                root-password: "{{ mysql_root_password | b64encode }}"
-                username: "{{ mysql_app_user | b64encode }}"
-                password: "{{ mysql_app_password | b64encode }}"
-          no_log: true
-
-        - name: Deploy MySQL PVC
-          k8s:
-            state: present
-            src: "{{ playbook_dir }}/../../kubernetes/mysql/pvc.yaml"
-            namespace: "{{ kube_namespace }}"
-
-        - name: Deploy MySQL Service
-          k8s:
-            state: present
-            src: "{{ playbook_dir }}/../../kubernetes/mysql/service.yaml"
-            namespace: "{{ kube_namespace }}"
-
-        - name: Deploy MySQL
-          k8s:
-            state: present
-            src: "{{ playbook_dir }}/../../kubernetes/mysql/deployment.yaml"
-            namespace: "{{ kube_namespace }}"
-            definition:
-              spec:
-                template:
-                  spec:
-                    containers:
-                    - name: mysql
-                      image: "mysql:{{ mysql_version }}"
-                      env:
-                      - name: MYSQL_DATABASE
-                        value: "{{ mysql_database_name }}"
-
-        - name: Wait for MySQL to be ready
-          k8s_info:
-            kind: Pod
-            namespace: "{{ kube_namespace }}"
-            label_selectors:
-              - app = fullstack
-              - tier = database
-            wait: yes
-            wait_timeout: 300
-          register: mysql_pod
-      when: deploy_mysql | default(true)
-
-    # ======================
-    # 3. BACKEND DEPLOYMENT
-    # ======================
-    - block:
-        - name: Create backend secrets
-          k8s:
-            state: present
-            definition:
-              apiVersion: v1
-              kind: Secret
-              metadata:
-                name: backend-secrets
-                namespace: "{{ kube_namespace }}"
-              type: Opaque
-              data:
-                spring-datasource-url: "{{ spring_datasource_url | b64encode }}"
-                spring-datasource-username: "{{ mysql_app_user | b64encode }}"
-                spring-datasource-password: "{{ mysql_app_password | b64encode }}"
-          no_log: true
-
-        - name: Deploy Backend Service
-          k8s:
-            state: present
-            src: "{{ playbook_dir }}/../../kubernetes/backend/service.yaml"
-            namespace: "{{ kube_namespace }}"
-
-        - name: Deploy Backend
-          k8s:
-            state: present
-            src: "{{ playbook_dir }}/../../kubernetes/backend/deployment.yaml"
-            namespace: "{{ kube_namespace }}"
-            definition:
-              spec:
-                template:
-                  spec:
-                    containers:
-                    - name: backend
-                      image: "{{ docker_registry }}/backend:{{ version }}"
-                      envFrom:
-                      - secretRef:
-                          name: backend-secrets
-
-        - name: Verify backend deployment
-          command: >
-            kubectl -n {{ kube_namespace }} rollout status deployment/backend --timeout=300s
-          register: backend_rollout
-          failed_when: backend_rollout.rc != 0
-      when: deploy_backend | default(true)
-
-    # ======================
-    # 4. FRONTEND DEPLOYMENT
-    # ======================
-    - block:
-        - name: Deploy Frontend Service
-          k8s:
-            state: present
-            src: "{{ playbook_dir }}/../../kubernetes/frontend/service.yaml"
-            namespace: "{{ kube_namespace }}"
-
-        - name: Deploy Frontend
-          k8s:
-            state: present
-            src: "{{ playbook_dir }}/../../kubernetes/frontend/deployment.yaml"
-            namespace: "{{ kube_namespace }}"
-            definition:
-              spec:
-                template:
-                  spec:
-                    containers:
-                    - name: frontend
-                      image: "{{ docker_registry }}/frontend:{{ version }}"
-                      env:
-                      - name: API_BASE_URL
-                        value: "http://backend-service.{{ kube_namespace }}.svc.cluster.local:{{ backend_service_port }}"
-
-        - name: Verify frontend deployment
-          command: >
-            kubectl -n {{ kube_namespace }} rollout status deployment/frontend --timeout=300s
-          register: frontend_rollout
-          failed_when: frontend_rollout.rc != 0
-      when: deploy_frontend | default(true)
-
-    # ======================
-    # 5. INGRESS (OPTIONAL)
-    # ======================
-    - block:
-        - name: Deploy Ingress
-          k8s:
-            state: present
-            src: "{{ playbook_dir }}/../../kubernetes/ingress.yaml"
-            namespace: "{{ kube_namespace }}"
-            definition:
-              spec:
-                rules:
-                - host: "{{ ingress_host }}"
-                  http:
-                    paths:
-                    - path: /
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: frontend-service
-                          port:
-                            number: 80
-                    - path: /api
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: backend-service
-                          port:
-                            number: 8080
-      when: deploy_ingress | default(false) and ingress_host is defined
-
-    # ======================
-    # 6. POST-DEPLOYMENT CHECKS
-    # ======================
-    - name: Verify all deployments
-      k8s_info:
-        kind: Deployment
         namespace: "{{ kube_namespace }}"
-      register: deployments
+        definition: "{{ lookup('file', 'backend/deployment.yaml') | from_yaml }}"
 
-    - name: Print deployment status
-      debug:
-        msg: "Deployment {{ item.metadata.name }} is {{ item.status.conditions | selectattr('type', 'equalto', 'Available') | first | default({'status': 'Unknown'}) }}"
-      loop: "{{ deployments.resources }}"
-      loop_control:
-        label: "{{ item.metadata.name }}"
+    - name: Deploy backend service
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ kube_namespace }}"
+        definition: "{{ lookup('file', 'backend/service.yaml') | from_yaml }}"
+
+    - name: Deploy frontend
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ kube_namespace }}"
+        definition: "{{ lookup('file', 'frontend/deployment.yaml') | from_yaml }}"
+
+    - name: Deploy frontend service
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ kube_namespace }}"
+        definition: "{{ lookup('file', 'frontend/service.yaml') | from_yaml }}"
