@@ -59,7 +59,7 @@ pipeline {
                 }
             }
         }
-    }
+    
         // CI PHASE
         stage('Build & Test Frontend') {
             steps {
