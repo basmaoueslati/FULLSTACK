@@ -43,11 +43,14 @@ pipeline {
                 stage('SonarQube Backend') {
                     steps {
                         dir('backend_app'){
+                    sh '''
                         mvn clean verify sonar:sonar \
                           -Dsonar.projectKey=backend \
                           -Dsonar.host.url=http://51.44.166.2:9000 \
                           -Dsonar.login=sqp_a7f3f97571385b9bafef3aeee9f7095c6f00a2a4
                     }
+                    '''
+
                         timeout(time: 15, unit: 'MINUTES') {
                         waitForQualityGate abortPipeline: true
                     }
@@ -56,12 +59,15 @@ pipeline {
                 stage('SonarQube Frontend') {
                     steps {
                         dir('frontend') {
+                        sh '''
+
                         sonar-scanner \
                           -Dsonar.projectKey=frontend \
                           -Dsonar.sources=. \
                           -Dsonar.host.url=http://51.44.166.2:9000 \
                           -Dsonar.login=sqp_de1284ea46de73c292ee6b5cc1bc51b854eeafc7
                         }
+                         '''
                           timeout(time: 15, unit: 'MINUTES') {
                         waitForQualityGate abortPipeline: true
                     }
