@@ -33,7 +33,7 @@
       kubernetes.core.k8s:
         state: present
         namespace: "{{ kube_namespace }}"
-        definition: "{{ lookup('template', 'kubernetes/mysql/pvc.yaml') | from_yaml }}"
+        definition: "{{ lookup('template', 'pvc.yaml') | from_yaml }}"
 
     - name: Deploy MySQL Service
       k8s:
