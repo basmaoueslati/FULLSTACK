@@ -1,0 +1,39 @@
+---
+- name: Build and Push Frontend & Backend Docker Images
+  hosts: localhost
+  connection: local
+  vars:
+    image_tag: "{{ NEXT_VERSION }}"
+    frontend_path: "{{ build_context }}/frontend"
+    backend_path: "{{ build_context }}/backend_app"
+  tasks:
+    - name: Log in to Docker Hub
+      community.docker.docker_login:
+        username: "{{ lookup('env', 'DOCKER_USERNAME') }}"
+        password: "{{ lookup('env', 'DOCKER_PASSWORD') }}"
+
+    - name: Build and push Frontend image
+      community.docker.docker_image:
+        name: "basmaoueslati/fullstackproject"
+        tag: "frontend-{{ image_tag }}"
+        source: build
+        build:
+          path: "{{ frontend_path }}"
+        push: yes
+        state: present
+
+    - name: Build and push Backend image
+      community.docker.docker_image:
+        name: "basmaoueslati/fullstackproject"
+        tag: "backend-{{ image_tag }}"
+        source: build
+        build:
+          path: "{{ backend_path }}"
+        push: yes
+        state: present
+
+    - name: Verify Frontend image was pushed
+      command: docker pull basmaoueslati/fullstackproject:frontend-{{ image_tag }}
+
+    - name: Verify Backend image was pushed
+      command: docker pull basmaoueslati/fullstackproject:backend-{{ image_tag }}
