@@ -30,23 +30,10 @@
       #no_log: true  # Prevents secret values from being logged
 
     - name: Deploy MySQL PVC
-      k8s:
+      kubernetes.core.k8s:
         state: present
-        definition:
-          apiVersion: v1
-          kind: PersistentVolumeClaim
-          metadata:
-            name: mysql-pvc
-            labels:
-              app: fullstack
-              tier: database
-          spec:
-            accessModes:
-              - ReadWriteOnce
-            resources:
-              requests:
-                storage: "{{ mysql_storage_size | default('5Gi') }}"
-            storageClassName: "{{ mysql_storage_class | default('standard') }}"
+        namespace: "{{ kube_namespace }}"
+        definition: "{{ lookup('template', 'kubernetes/mysql/pvc.yaml') | from_yaml }}"
 
     - name: Deploy MySQL Service
       k8s:
