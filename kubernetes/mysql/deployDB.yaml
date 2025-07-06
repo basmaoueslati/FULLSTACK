@@ -34,21 +34,6 @@
         state: present
         namespace: "{{ kube_namespace }}"
         definition: "{{ lookup('template', 'pvc.yaml') | from_yaml }}"
-    - name: mysql-pvc
-      kubernetes.core.k8s:
-        state: present
-        namespace: "{{ kube_namespace }}"
-        labels:
-          app: fullstack
-          tier: database
-        spec:
-          accessModes:
-          - ReadWriteOnce
-          resources:
-            requests:
-              storage: 5Gi  # Adjust based on your needs
-          storageClassName: standard # Modify if using a specific storage class
-
     - name: Deploy MySQL Service
       k8s:
         state: present
