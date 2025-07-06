@@ -26,7 +26,7 @@
             root-password: "{{ mysql_root_password | b64encode }}"
             username: "{{ mysql_app_user | b64encode }}"
             password: "{{ mysql_app_password | b64encode }}"
-      no_log: true  # Prevents secret values from being logged
+      #no_log: true  # Prevents secret values from being logged
 
     - name: Deploy MySQL PVC
       k8s:
