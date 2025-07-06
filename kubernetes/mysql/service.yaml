@@ -1,4 +1,4 @@
-# kubernetes/1-mysql/service.yaml
+# kubernetes/mysql/service.yaml
 apiVersion: v1
 kind: Service
 metadata:
