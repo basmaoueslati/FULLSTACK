@@ -1,10 +1,9 @@
-
 pipeline {
     agent any
     environment {
         DOCKER_REGISTRY = '51.44.166.2'
         KUBE_NAMESPACE = 'fullstack-app'
-        //VERSION = "${env.BUILD_ID}-${env.GIT_COMMIT.take(8)}"
+        VERSION = "${env.BUILD_ID}-${env.GIT_COMMIT.take(8)}"
         REPO_URL = "git@github.com:basmaoueslati/FULLSTACK.git"  
         BRANCH_NAME = "main" 
          stages {     
@@ -130,7 +129,7 @@ pipeline {
             steps {
                 dir('backend_app') {
                     nexusArtifactUploader artifacts: [[
-                        artifactId: 'backend-app',
+                        artifactId: 'demo',
                         file: "target/demo-${NEXT_VERSION}.jar",
                         type: 'jar'
                     ]],
