@@ -154,7 +154,13 @@ pipeline {
         version: "${NEXT_VERSION}"
     }
 }
-
+                stage('Pre-Build Docker Cleanup') {
+                    steps {
+                        sh '''
+                            docker system prune -a -f --volumes
+                        '''
+                    }
+                }
                 stage('Docker Build & Push via Ansible') {
             steps {
                 withCredentials([
