@@ -21,6 +21,7 @@
           kind: Secret
           metadata:
             name: mysql-secrets
+            namespace: "{{ kube_namespace }}"
           type: Opaque
           data:
             root-password: "{{ (mysql_root_password | string) | b64encode }}"
