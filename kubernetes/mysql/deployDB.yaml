@@ -28,7 +28,17 @@
             username: "{{ (mysql_app_user | string) | b64encode }}"
             password: "{{ (mysql_app_password | string) | b64encode }}"
       #no_log: true  # Prevents secret values from being logged
+      
+    - name: Create standard StorageClass (if not exists)
+      k8s:
+        state: present
+        src: standard-storageclass.yaml
 
+    - name: Create PersistentVolume for MySQL
+      k8s:
+        state: present
+        src: mysql-pv.yaml
+        
     - name: Deploy MySQL PVC
       kubernetes.core.k8s:
         state: present
