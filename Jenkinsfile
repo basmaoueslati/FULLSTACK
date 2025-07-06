@@ -3,7 +3,7 @@ pipeline {
     environment {
         DOCKER_REGISTRY = '51.44.166.2'
         KUBE_NAMESPACE = 'fullstack-app'
-        VERSION = "${env.BUILD_ID}-${env.GIT_COMMIT.take(8)}"
+        //VERSION = "${env.BUILD_ID}-${env.GIT_COMMIT.take(8)}"
         REPO_URL = "git@github.com:basmaoueslati/FULLSTACK.git"  
         BRANCH_NAME = "main" 
           
@@ -131,7 +131,7 @@ pipeline {
                 dir('backend_app') {
                     nexusArtifactUploader artifacts: [[
                         artifactId: 'backend-app',
-                        file: "target/demo-${VERSION}.jar",
+                        file: "target/demo-${NEXT_VERSION}.jar",
                         type: 'jar'
                     ]],
                     credentialsId: 'nexus',
@@ -140,7 +140,7 @@ pipeline {
                     nexusVersion: 'nexus3',
                     protocol: 'http',
                     repository: 'backend',
-                    version: "${VERSION}"
+                    version: "${NEXT_VERSION}"
                 }
             }
         }
@@ -156,7 +156,7 @@ pipeline {
                     sh """
                         ansible-playbook ansible/playbook-delivery.yml \
                         -e build_context=${WORKSPACE} \
-                        -e NEXT_VERSION=${VERSION}
+                        -e NEXT_VERSION=${NEXT_VERSION}
                     """
                 }
             }
@@ -198,7 +198,7 @@ pipeline {
                     playbook: 'ansible/deploy-k8s.yaml',
                     inventory: "ansible/inventories/${env.ENVIRONMENT}.ini",
                     extras: """
-                        -e version=${VERSION} \
+                        -e version=${NEXT_VERSION} \
                         -e kube_namespace=${KUBE_NAMESPACE} \
                         -e docker_registry=${DOCKER_REGISTRY}
                     """
