@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
-@SpringBootTest(classes = NoDbTestConfig.class)
+@SpringBootTest(classes = {}, webEnvironment = SpringBootTest.WebEnvironment.NONE)
 class DemoApplicationTests {
 
     @Test
