@@ -164,12 +164,12 @@ pipeline {
                         passwordVariable: 'DOCKER_PASSWORD'
                     )
                 ]) {
-                    sh """
-                        ansible-playbook ansible/playbook-delivery.yml \
-                        -e build_context=${WORKSPACE} \
-                        -e NEXT_VERSION=${NEXT_VERSION} \
-
-                    """
+                sh """
+                  ansible-playbook ansible/playbook-delivery.yml \
+                    -e build_context=${WORKSPACE} \
+                    -e NEXT_VERSION=${NEXT_VERSION} \
+                    -e docker_registry=${DOCKER_REGISTRY}
+                """
                 }
             }
         }
