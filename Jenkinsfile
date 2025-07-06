@@ -40,40 +40,37 @@ pipeline {
         
         stage('Quality Gates') {
             parallel {
-                stage('SonarQube Backend') {
-                    steps {
-                        dir('backend_app'){
-                    sh '''
-                        mvn clean verify sonar:sonar \
-                          -Dsonar.projectKey=backend \
-                          -Dsonar.host.url=http://51.44.166.2:9000 \
-                          -Dsonar.login=sqp_a7f3f97571385b9bafef3aeee9f7095c6f00a2a4
-                   
-                    '''
+            stage('SonarQube Backend') {
+                steps {
+                    dir('backend_app') {
+                        withSonarQubeEnv('SonarQube') {
+                            sh '''
+                                mvn clean verify sonar:sonar \
+                                  -Dsonar.projectKey=backend
+                            '''
                         }
                         timeout(time: 15, unit: 'MINUTES') {
-                        waitForQualityGate abortPipeline: true
-                    }
-                    }
-                }
-                stage('SonarQube Frontend') {
-                    steps {
-                        dir('frontend') {
-                        sh '''
-
-                        sonar-scanner \
-                          -Dsonar.projectKey=frontend \
-                          -Dsonar.sources=. \
-                          -Dsonar.host.url=http://51.44.166.2:9000 \
-                          -Dsonar.login=sqp_de1284ea46de73c292ee6b5cc1bc51b854eeafc7
-                          '''
+                            waitForQualityGate abortPipeline: true
                         }
-                         
-                          timeout(time: 15, unit: 'MINUTES') {
-                        waitForQualityGate abortPipeline: true
-                    }
                     }
                 }
+            }
+            stage('SonarQube Frontend') {
+                steps {
+                    dir('frontend') {
+                        withSonarQubeEnv('SonarQube') {
+                            sh '''
+                                sonar-scanner \
+                                  -Dsonar.projectKey=frontend \
+                                  -Dsonar.sources=.
+                            '''
+                        }
+                        timeout(time: 15, unit: 'MINUTES') {
+                            waitForQualityGate abortPipeline: true
+                        }
+                    }
+                }
+            }
             }
         }
         
