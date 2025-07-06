@@ -1,4 +1,4 @@
-# kubernetes/1-mysql/pvc.yaml
+# kubernetes/mysql/pvc.yaml
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
