@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: {{ docker_registry }}/backend:{{ version }}
+        image: {{ docker_registry }}/fullstackproject:backend-{{ version }}
         ports:
         - containerPort: 8080
         envFrom:
