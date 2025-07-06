@@ -21,6 +21,11 @@ pipeline {
         }
 
         stage('Build Backend') {
+                    when {
+            expression {
+                return !env.SKIP_BACKEND_TESTS
+            }
+        }
             steps {
                 dir('backend_app'){
                 sh 'mvn clean package -DskipTests=true'
