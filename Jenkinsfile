@@ -58,13 +58,14 @@ pipeline {
             stage('SonarQube Frontend') {
                 steps {
                     dir('frontend') {
-                        withSonarQubeEnv('SonarQube') {
-                            sh '''
-                                sonar-scanner \
-                                  -Dsonar.projectKey=frontend \
-                                  -Dsonar.sources=.
-                            '''
-                        }
+                    withSonarQubeEnv('SonarQube') {
+                        sh '''
+                            sonar-scanner \
+                              -Dsonar.projectKey=frontend \
+                              -Dsonar.sources=. \
+                              -Dsonar.token=sqp_de1284ea46de73c292ee6b5cc1bc51b854eeafc7
+                        '''
+                    }
                         timeout(time: 15, unit: 'MINUTES') {
                             waitForQualityGate abortPipeline: true
                         }
