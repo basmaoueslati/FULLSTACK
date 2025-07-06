@@ -1,6 +1,6 @@
 ---
 - name: Deploy MySQL to Kubernetes
-  hosts: k8s_master
+  hosts: kubernetes_master
   vars_files:
     - "{{ inventory_dir }}/../group_vars/all.yml"
     - "{{ inventory_dir }}/../group_vars/{{ environment }}.yml"
@@ -21,7 +21,6 @@
           kind: Secret
           metadata:
             name: mysql-secrets
-            namespace: "{{ kube_namespace }}"
           type: Opaque
           data:
             root-password: "{{ mysql_root_password | b64encode }}"
@@ -37,7 +36,6 @@
           kind: PersistentVolumeClaim
           metadata:
             name: mysql-pvc
-            namespace: "{{ kube_namespace }}"
             labels:
               app: fullstack
               tier: database
@@ -57,7 +55,6 @@
           kind: Service
           metadata:
             name: mysql-service
-            namespace: "{{ kube_namespace }}"
             labels:
               app: fullstack
               tier: database
@@ -78,7 +75,6 @@
           kind: Deployment
           metadata:
             name: mysql
-            namespace: "{{ kube_namespace }}"
             labels:
               app: fullstack
               tier: database
@@ -152,7 +148,7 @@
 
     - name: Verify MySQL deployment
       command: >
-        kubectl -n {{ kube_namespace }} rollout status deployment/mysql --timeout=300s
+        kubectl  rollout status deployment/mysql --timeout=300s
       register: rollout_result
       failed_when: rollout_result.rc != 0
       changed_when: False
