@@ -188,26 +188,31 @@ pipeline {
             }
         }
         
-                stage('Deploy to Kubernetes') {
-                    when {
-                        branch 'main'
-                    }
-                    steps {
-                        ansiblePlaybook(
-                            playbook: 'ansible/deploy-k8s.yaml',
-                            inventory: "ansible/dev.ini",
-                            extras: """
-                                -e version=${NEXT_VERSION} \
-                                -e docker_registry=${DOCKER_REGISTRY}
-                            """
-                        )
-                        // Optional rollout check
-                        sh """
-                            kubectl rollout status deployment/frontend --timeout=300s
-                            kubectl rollout status deployment/backend --timeout=300s
-                        """
-                    }
-                }
+stage('Deploy to Kubernetes') {
+    when {
+        branch 'main'
+    }
+    steps {
+        withCredentials([sshUserPrivateKey(credentialsId: 'ssh-jenkins-Masterk8s', keyFileVariable: 'SSH_KEY')]) {
+            ansiblePlaybook(
+                playbook: 'ansible/deploy-k8s.yaml',
+                inventory: 'ansible/dev.ini',
+                extras: """
+                    --private-key=${SSH_KEY} \
+                    -e version=${NEXT_VERSION} \
+                    -e docker_registry=${DOCKER_REGISTRY}
+                """
+            )
+
+            // Optional rollout check
+            sh """
+                kubectl rollout status deployment/frontend --timeout=300s
+                kubectl rollout status deployment/backend --timeout=300s
+            """
+        }
+    }
+}
+
 
     }
             post {
