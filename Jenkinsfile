@@ -25,8 +25,7 @@ pipeline {
                             NEXT_VERSION = "${parts[0]}.${parts[1]}.${newPatch}"
                             
                             echo "Updating version: ${CURRENT_VERSION} → ${NEXT_VERSION}"
-                      }
-                        }
+
                 //set version in POM
                 sh "mvn versions:set-property -Dproperty=revision -DnewVersion=${NEXT_VERSION}"
                 sh "mvn versions:commit"
@@ -51,7 +50,8 @@ pipeline {
 
                     }
                 }
-
+                      }
+                        }
     
         // CI PHASE
              stage('Build & test'){
