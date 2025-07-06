@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        DOCKER_REGISTRY = '51.44.166.2'
+        DOCKER_REGISTRY = '51.44.166.2:8081'
         KUBE_NAMESPACE = 'fullstack-app'
         //VERSION = "${env.BUILD_ID}-${env.GIT_COMMIT.take(8)}"
         REPO_URL = "git@github.com:basmaoueslati/FULLSTACK.git"  
