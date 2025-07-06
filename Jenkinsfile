@@ -7,8 +7,8 @@ pipeline {
         REPO_URL = "git@github.com:basmaoueslati/FULLSTACK.git"  
         BRANCH_NAME = "main" 
     }
-         stages {     
-        stage('Calculate Version') {
+         stages {
+             stage('Setting version & push changes'){
                     steps {
                         script {
                       dir('backend_app') {
@@ -27,13 +27,7 @@ pipeline {
                             echo "Updating version: ${CURRENT_VERSION} → ${NEXT_VERSION}"
                       }
                         }
-                    }
-                }
-        // Set version in POM
-        stage('Set Version') {
-            steps {
-                dir('backend_app') {
-
+                //set version in POM
                 sh "mvn versions:set-property -Dproperty=revision -DnewVersion=${NEXT_VERSION}"
                 sh "mvn versions:commit"
                 
@@ -46,20 +40,18 @@ pipeline {
                 git add pom.xml
                 git commit -m "Bump version to ${NEXT_VERSION}"
                 """
-                }
-            }
-        }
-                stage('Push Changes') {
-                    steps {
-                        sshagent(['github-ssh-key']) {
+                //Push Changes
+                  sshagent(['github-ssh-key']) {
                             sh '''
                                 git remote set-url origin git@github.com:basmaoueslati/FULLSTACK.git
                                 git pull origin ${BRANCH_NAME} || true
                                 git push origin HEAD:${BRANCH_NAME}
                             '''
                         }
+
                     }
                 }
+
     
         // CI PHASE
              stage('Build & test'){
