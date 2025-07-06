@@ -51,15 +51,23 @@ pipeline {
                        '''
                         }
                     }
+                        timeout(time: 15, unit: 'MINUTES') {
+                        waitForQualityGate abortPipeline: true
+                    }
                     }
                 }
                 stage('SonarQube Frontend') {
                     steps {
                         dir('frontend') {
-                            withSonarQubeEnv('SonarQube') {
-                                sh 'sonar-scanner -Dsonar.projectKey=frontend'
-                            }
+                           sh '''
+                               mvn clean verify sonar:sonar \
+                              -Dsonar.projectKey=frontend \
+        
+                               '''
                         }
+                          timeout(time: 15, unit: 'MINUTES') {
+                        waitForQualityGate abortPipeline: true
+                    }
                     }
                 }
             }
