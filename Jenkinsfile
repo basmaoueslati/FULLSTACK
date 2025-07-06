@@ -182,29 +182,28 @@ pipeline {
             }
         }
         
-        stage('Deploy to Kubernetes') {
-            when {
-                branch 'main'
-            }
-            steps {
-                // Use Ansible for deployment
-                ansiblePlaybook(
-                    playbook: 'ansible/deploy-k8s.yaml',
-                    inventory: "ansible/inventories/${env.ENVIRONMENT}.ini",
-                    extras: """
-                        -e version=${NEXT_VERSION} \
-                        -e kube_namespace=${KUBE_NAMESPACE} \
-                        -e docker_registry=${DOCKER_REGISTRY}
-                    """
-                )
-                
-                // Verify deployment
-                sh """
-                    kubectl -n ${KUBE_NAMESPACE} rollout status deployment/frontend --timeout=300s
-                    kubectl -n ${KUBE_NAMESPACE} rollout status deployment/backend --timeout=300s
-                """
-            }
-        }
+                stage('Deploy to Kubernetes') {
+                    when {
+                        branch 'main'
+                    }
+                    steps {
+                        ansiblePlaybook(
+                            playbook: 'ansible/deploy-k8s.yaml',
+                            inventory: "ansible/inventories/${env.ENVIRONMENT}.ini",
+                            extras: """
+                                -e version=${NEXT_VERSION} \
+                                -e kube_namespace=${KUBE_NAMESPACE} \
+                                -e docker_registry=${DOCKER_REGISTRY}
+                            """
+                        )
+                        // Optional rollout check
+                        sh """
+                            kubectl -n ${KUBE_NAMESPACE} rollout status deployment/frontend --timeout=300s
+                            kubectl -n ${KUBE_NAMESPACE} rollout status deployment/backend --timeout=300s
+                        """
+                    }
+                }
+
     }
             post {
                 always {
