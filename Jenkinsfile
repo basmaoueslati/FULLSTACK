@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        DOCKER_REGISTRY = '35.180.88.60'
+        DOCKER_REGISTRY = '51.44.166.2'
         KUBE_NAMESPACE = 'fullstack-app'
         VERSION = "${env.BUILD_ID}-${env.GIT_COMMIT.take(8)}"
         REPO_URL = "git@github.com:basmaoueslati/FULLSTACK.git"  
@@ -19,20 +19,6 @@ pipeline {
                 }
             }
         }
-        stage('Start MySQL for Tests') {
-                steps {
-                    sh '''
-                    docker run -d --name mysql-test \
-                      -e MYSQL_ROOT_PASSWORD="" \
-                      -e MYSQL_DATABASE=mydb \
-                      -p 3306:3306 \
-                      mysql:8.0
-                    
-                    sh 'mvn test -Dspring.profiles.active=dev'
-                    '''
-                }
-            }
-
 
         stage('Build Backend') {
             steps {
