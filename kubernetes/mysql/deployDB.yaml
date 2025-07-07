@@ -96,15 +96,23 @@
                   ports:
                   - containerPort: 3306
                   env:
-                  - name: MYSQL_ALLOW_EMPTY_PASSWORD
-                    value: "yes"
-                  - name: MYSQL_DATABASE
-                    value: "{{ mysql_database_name | default('mydb') }}"
-                  - name: MYSQL_USER
-                    valueFrom:
-                      secretKeyRef:
-                        name: mysql-secrets
-                        key: username
+                    - name: MYSQL_ROOT_PASSWORD
+                      valueFrom:
+                        secretKeyRef:
+                          name: mysql-secrets
+                          key: root-password
+                    - name: MYSQL_DATABASE
+                      value: "{{ mysql_database_name | default('mydb') }}"
+                    - name: MYSQL_USER
+                      valueFrom:
+                        secretKeyRef:
+                          name: mysql-secrets
+                          key: username
+                    - name: MYSQL_PASSWORD
+                      valueFrom:
+                        secretKeyRef:
+                          name: mysql-secrets
+                          key: password
                   volumeMounts:
                   - name: mysql-persistent-storage
                     mountPath: /var/lib/mysql
