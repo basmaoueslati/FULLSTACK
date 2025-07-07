@@ -171,7 +171,7 @@ pipeline {
                     )
                 ]) {
                 sh """
-                  ansible-playbook ansible/playbook-delivery.yml \
+                  ansible-playbook -vvv ansible/playbook-delivery.yml \
                     -e build_context=${WORKSPACE} \
                     -e NEXT_VERSION=${NEXT_VERSION} \
                 """
