@@ -188,31 +188,27 @@ pipeline {
             }
         }
         
-                stage('Deploy to Kubernetes') {
-                    when {
-                        branch 'main'
-                    }
-                    steps {
-                        ansiblePlaybook(
-                            playbook: 'ansible/deploy-k8s.yaml',
-                            inventory: 'ansible/dev.ini',
-                            credentialsId: 'ssh-jenkins-Masterk8s', // Use the SSH key stored in Jenkins
-                            extras: """
-                                -e version=${NEXT_VERSION} \
-                                -e docker_registry=${DOCKER_REGISTRY}
+                    stage('Deploy to Kubernetes') {
+                        when {
+                            branch 'main'
+                        }
+                        steps {
+                            ansiblePlaybook(
+                                playbook: 'ansible/deploy-k8s.yaml',
+                                inventory: 'ansible/dev.ini',
+                                credentialsId: 'ssh-jenkins-Masterk8s',
+                                extras: """
+                                    -e version=${NEXT_VERSION} \
+                                    -e docker_registry=basmaoueslati
+                                """
+                            )
+                    
+                            sh """
+                                kubectl rollout -n fullstackapp status deployment/frontend --timeout=300s
+                                kubectl rollout -n fullstackapp status deployment/backend --timeout=300s
                             """
-                        )
-                
-                        sh """
-                            kubectl rollout -n fullstackapp status deployment/frontend --timeout=300s
-                            kubectl rollout -n fullstackapp status deployment/backend --timeout=300s
-                        """
+                        }
                     }
-                }
-
-
-
-
     }
             post {
                 always {
