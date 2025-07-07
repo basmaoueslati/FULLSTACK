@@ -194,15 +194,14 @@ stage('Deploy to Kubernetes') {
     }
     steps {
         withCredentials([sshUserPrivateKey(credentialsId: 'ssh-jenkins-Masterk8s', keyFileVariable: 'SSH_KEY')]) {
-            ansiblePlaybook(
-                playbook: 'ansible/deploy-k8s.yaml',
-                inventory: 'ansible/dev.ini',
-                extras: """
-                    --private-key=${SSH_KEY} \
-                    -e version=${NEXT_VERSION} \
-                    -e docker_registry=${DOCKER_REGISTRY}
-                """
-            )
+                ansiblePlaybook(
+                  playbook: 'ansible/deploy-k8s.yaml',
+                  inventory: 'ansible/dev.ini',
+                  extraVars: [
+                    version: NEXT_VERSION,
+                    docker_registry: DOCKER_REGISTRY
+                  ]
+                )
 
             // Optional rollout check
             sh """
