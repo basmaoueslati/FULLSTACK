@@ -193,6 +193,11 @@ pipeline {
                             branch 'main'
                         }
                         steps {
+                                    // Apply backend ConfigMap
+                            sh 'kubectl apply -f kubernetes/backend/backend-config.yaml -n fullstackapp'
+        
+                                    // Apply frontend ConfigMap
+                             sh 'kubectl apply -f kubernetes/frontend/frontend-config.yaml -n fullstackapp'
                             ansiblePlaybook(
                                 playbook: 'ansible/deploy-k8s.yaml',
                                 inventory: 'ansible/dev.ini',
