@@ -9,22 +9,22 @@
       kubernetes.core.k8s:
         state: present
         namespace: "{{ kube_namespace }}"
-        definition: "{{ lookup('file', '../kubernetes/backend/deployment.yaml') | from_yaml }}"
+        definition: "{{ lookup('template', '../kubernetes/backend/deployment.yaml') | from_yaml }}"
 
     - name: Deploy backend service
       kubernetes.core.k8s:
         state: present
         namespace: "{{ kube_namespace }}"
-        definition: "{{ lookup('file', '../kubernetes/backend/service.yaml') | from_yaml }}"
+        definition: "{{ lookup('template', '../kubernetes/backend/service.yaml') | from_yaml }}"
 
     - name: Deploy frontend
       kubernetes.core.k8s:
         state: present
         namespace: "{{ kube_namespace }}"
-        definition: "{{ lookup('file', '../kubernetes/frontend/deployment.yaml') | from_yaml }}"
+        definition: "{{ lookup('template', '../kubernetes/frontend/deployment.yaml') | from_yaml }}"
 
     - name: Deploy frontend service
       kubernetes.core.k8s:
         state: present
         namespace: "{{ kube_namespace }}"
-        definition: "{{ lookup('file', '../kubernetes/frontend/service.yaml') | from_yaml }}"
+        definition: "{{ lookup('template', '../kubernetes/frontend/service.yaml') | from_yaml }}"
