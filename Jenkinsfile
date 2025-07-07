@@ -188,29 +188,33 @@ pipeline {
             }
         }
         
-stage('Deploy to Kubernetes') {
-    when {
-        branch 'main'
-    }
-    steps {
-        withCredentials([sshUserPrivateKey(credentialsId: 'ssh-jenkins-Masterk8s', keyFileVariable: 'SSH_KEY')]) {
-                ansiblePlaybook(
-                  playbook: 'ansible/deploy-k8s.yaml',
-                  inventory: 'ansible/dev.ini',
-                  extraVars: [
-                    version: NEXT_VERSION,
-                    docker_registry: DOCKER_REGISTRY
-                  ]
-                )
+            stage('Deploy to Kubernetes') {
+                when {
+                    branch 'main'
+                }
+                steps {
+                    withCredentials([sshUserPrivateKey(credentialsId: 'ssh-jenkins-Masterk8s', keyFileVariable: 'SSH_KEY')]) {
+                        ansiblePlaybook(
+                            playbook: 'ansible/deploy-k8s.yaml',
+                            inventory: 'ansible/dev.ini',
+                            extras: """
+                                -e version=${NEXT_VERSION} \
+                                -e docker_registry=${DOCKER_REGISTRY}
+                            """,
+                            credentialsId: '', // leave this empty
+                            sshExtraArgs: "-o StrictHostKeyChecking=no",
+                            keyFile: "${SSH_KEY}" // this line is REQUIRED
+                        )
+            
+                        // Optional rollout check
+                        sh """
+                            kubectl rollout status deployment/frontend --timeout=300s
+                            kubectl rollout status deployment/backend --timeout=300s
+                        """
+                    }
+                }
+            }
 
-            // Optional rollout check
-            sh """
-                kubectl rollout status deployment/frontend --timeout=300s
-                kubectl rollout status deployment/backend --timeout=300s
-            """
-        }
-    }
-}
 
 
     }
