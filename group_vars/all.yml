@@ -4,7 +4,10 @@ docker_registry: "51.44.166.2"
 
 # MySQL Configuration
 mysql_version: "8.0"
-mysql_database_name: "mydb"
+mysql_root_password: root123
+mysql_app_user: appuser
+mysql_app_password: myapp123
+mysql_database_name: mydb
 mysql_storage_size: "5Gi"
 mysql_storage_class: "standard"
 
