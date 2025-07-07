@@ -25,6 +25,7 @@ spec:
       containers:
       - name: backend
         image: "basmaoueslati/fullstackproject:backend-{{ version }}"
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         envFrom:
