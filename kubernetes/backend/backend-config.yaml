@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: fullstackapp
+data:
+  # Replace keys and values with your backend config
+  DATABASE_HOST: "mysql-service"
+  DATABASE_PORT: "3306"
+  LOG_LEVEL: "info"
+  # Add other config variables your backend needs
