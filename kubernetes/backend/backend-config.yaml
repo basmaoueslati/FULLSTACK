@@ -4,8 +4,5 @@ metadata:
   name: backend-config
   namespace: fullstackapp
 data:
-  # Replace keys and values with your backend config
-  DATABASE_HOST: "mysql-service"
-  DATABASE_PORT: "3306"
-  LOG_LEVEL: "info"
-  # Add other config variables your backend needs
+  SPRING_DATASOURCE_URL: jdbc:mysql://mysql-service.fullstackapp.svc.cluster.local:3306/mydb
+  SPRING_PROFILES_ACTIVE: dev
