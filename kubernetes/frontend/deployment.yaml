@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: "{{ docker_registry }}/fullstackproject:frontend-{{ version }}"
+        image: "basmaoueslati/fullstackproject:frontend-{{ version }}"
         ports:
         - containerPort: 80
         env:
