@@ -144,7 +144,7 @@
 
     - name: Verify MySQL deployment
       command: >
-        kubectl  rollout status deployment/mysql --timeout=300s
+        kubectl  rollout -n fullstackapp status deployment/mysql --timeout=300s
       register: rollout_result
       failed_when: rollout_result.rc != 0
       changed_when: False
