@@ -204,8 +204,8 @@ pipeline {
                         )
                 
                         sh """
-                            kubectl rollout status deployment/frontend --timeout=300s
-                            kubectl rollout status deployment/backend --timeout=300s
+                            kubectl rollout -n fullstackapp status deployment/frontend --timeout=300s
+                            kubectl rollout -n fullstackapp status deployment/backend --timeout=300s
                         """
                     }
                 }
