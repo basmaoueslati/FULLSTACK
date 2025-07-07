@@ -25,6 +25,7 @@ spec:
       containers:
       - name: frontend
         image: "basmaoueslati/fullstackproject:frontend-{{ version }}"
+        imagePullPolicy: Always
         ports:
         - containerPort: 80
         env:
