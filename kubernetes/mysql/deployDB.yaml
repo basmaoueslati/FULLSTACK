@@ -26,9 +26,7 @@
           data:
             root-password: "{{ (mysql_root_password | string) | b64encode }}"
             username: "{{ (mysql_app_user | string) | b64encode }}"
-            password: "{{ (mysql_app_password | string) | b64encode }}"
-      #no_log: true  # Prevents secret values from being logged
-      
+
     - name: Create standard StorageClass (if not exists)
       k8s:
         state: present
@@ -44,6 +42,7 @@
         state: present
         namespace: "{{ kube_namespace }}"
         definition: "{{ lookup('template', 'pvc.yaml') | from_yaml }}"
+
     - name: Deploy MySQL Service
       k8s:
         state: present
@@ -106,11 +105,6 @@
                       secretKeyRef:
                         name: mysql-secrets
                         key: username
-                  - name: MYSQL_PASSWORD
-                    valueFrom:
-                      secretKeyRef:
-                        name: mysql-secrets
-                        key: password
                   volumeMounts:
                   - name: mysql-persistent-storage
                     mountPath: /var/lib/mysql
@@ -144,7 +138,7 @@
 
     - name: Verify MySQL deployment
       command: >
-        kubectl  rollout -n fullstackapp status deployment/mysql --timeout=300s
+        kubectl rollout -n {{ kube_namespace }} status deployment/mysql --timeout=300s
       register: rollout_result
       failed_when: rollout_result.rc != 0
       changed_when: False
