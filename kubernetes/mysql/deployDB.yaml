@@ -64,7 +64,7 @@
         definition: "{{ lookup('file', playbook_dir + '/mysql-pv.yaml') | from_yaml }}"
       when: mysql_pv_info.resources | length == 0
 
-    - name: Delete MySQL PVC
+    - name: Delete MySQL PVC (if exists)
       k8s:
         kind: PersistentVolumeClaim
         name: mysql-pvc
@@ -73,12 +73,6 @@
         wait: yes
       ignore_errors: yes
 
-    - name: Deploy MySQL PVC if not exists
-      k8s:
-        state: present
-        namespace: "{{ kube_namespace }}"
-        definition: "{{ lookup('template', 'pvc.yaml') | from_yaml }}"
-      when: mysql_pvc_info.resources | length == 0
     - name: Check if MySQL PVC already exists
       k8s_info:
         kind: PersistentVolumeClaim
@@ -87,6 +81,14 @@
       register: mysql_pvc_info
       failed_when: false
       changed_when: false
+
+    - name: Deploy MySQL PVC if not exists
+      k8s:
+        state: present
+        namespace: "{{ kube_namespace }}"
+        definition: "{{ lookup('template', 'pvc.yaml') | from_yaml }}"
+      when: mysql_pvc_info.resources | length == 0
+
     - name: Deploy MySQL Service
       k8s:
         state: present
@@ -190,5 +192,3 @@
       register: rollout_result
       failed_when: rollout_result.rc != 0
       changed_when: false
-
-
