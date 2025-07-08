@@ -4,6 +4,7 @@
   vars_files:
     - "{{ inventory_dir }}/../group_vars/all.yml"
     - "{{ inventory_dir }}/../group_vars/{{ environment }}.yml"
+    - "{{ inventory_dir }}/../group_vars/secrets.yml"
 
   tasks:
     - name: Ensure namespace exists
@@ -13,7 +14,17 @@
         name: "{{ kube_namespace }}"
         state: present
 
-    - name: Create MySQL secrets
+    - name: Check if MySQL secret already exists
+      k8s_info:
+        api_version: v1
+        kind: Secret
+        namespace: "{{ kube_namespace }}"
+        name: mysql-secrets
+      register: mysql_secret_info
+      failed_when: false
+      changed_when: false
+
+    - name: Create MySQL secrets if not exists
       k8s:
         state: present
         definition:
@@ -27,6 +38,12 @@
             root-password: "{{ (mysql_root_password | string) | b64encode }}"
             username: "{{ (mysql_app_user | string) | b64encode }}"
             password: "{{ (mysql_app_password | string) | b64encode }}"
+      when: mysql_secret_info.resources | length == 0
+
+    - name: MySQL secrets already exist — skip creation
+      debug:
+        msg: "Secrets already exist — keeping existing passwords"
+      when: mysql_secret_info.resources | length > 0
 
     - name: Create standard StorageClass (if not exists)
       k8s:
@@ -39,7 +56,7 @@
         definition: "{{ lookup('file', playbook_dir + '/mysql-pv.yaml') | from_yaml }}"
 
     - name: Deploy MySQL PVC
-      kubernetes.core.k8s:
+      k8s:
         state: present
         namespace: "{{ kube_namespace }}"
         definition: "{{ lookup('template', 'pvc.yaml') | from_yaml }}"
@@ -126,17 +143,13 @@
                       memory: "{{ mysql_memory_limit | default('2Gi') }}"
                   livenessProbe:
                     exec:
-                      command:
-                      - mysqladmin
-                      - ping
+                      command: [ "mysqladmin", "ping" ]
                     initialDelaySeconds: 30
                     periodSeconds: 10
                     timeoutSeconds: 5
                   readinessProbe:
                     exec:
-                      command:
-                      - mysqladmin
-                      - ping
+                      command: [ "mysqladmin", "ping" ]
                     initialDelaySeconds: 5
                     periodSeconds: 5
                     timeoutSeconds: 3
@@ -150,4 +163,4 @@
         kubectl rollout -n {{ kube_namespace }} status deployment/mysql --timeout=300s
       register: rollout_result
       failed_when: rollout_result.rc != 0
-      changed_when: False
+      changed_when: false
