@@ -79,7 +79,14 @@
         namespace: "{{ kube_namespace }}"
         definition: "{{ lookup('template', 'pvc.yaml') | from_yaml }}"
       when: mysql_pvc_info.resources | length == 0
-
+    - name: Check if MySQL PVC already exists
+      k8s_info:
+        kind: PersistentVolumeClaim
+        namespace: "{{ kube_namespace }}"
+        name: mysql-pvc
+      register: mysql_pvc_info
+      failed_when: false
+      changed_when: false
     - name: Deploy MySQL Service
       k8s:
         state: present
