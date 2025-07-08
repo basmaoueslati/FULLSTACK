@@ -1,3 +1,5 @@
+def stageResults = [:]
+
 pipeline {
     agent any
     environment {
@@ -7,40 +9,35 @@ pipeline {
         BRANCH_NAME = "main"
     }
 
-    options {
-        skipStagesAfterUnstable()
-    }
-
     stages {
+
         stage('Clean Jenkins Workspace') {
             steps {
                 script {
-                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                        stageResults['Clean Jenkins Workspace'] = 'SUCCESS'
-                        echo 'Removing old backend/frontend artifacts'
-                        sh 'rm -rf backend_app/target frontend/dist || true'
-                    }
-                    if (!stageResults.containsKey('Clean Jenkins Workspace')) {
-                        stageResults['Clean Jenkins Workspace'] = 'FAILURE'
-                    }
+                    stageResults['Clean Jenkins Workspace'] = 'SUCCESS'
+                    echo 'Removing old backend/frontend artifacts'
+                    sh 'rm -rf backend_app/target frontend/dist || true'
                 }
+            }
+            post {
+                failure { script { stageResults['Clean Jenkins Workspace'] = 'FAILURE' } }
             }
         }
 
         stage('Setting version & push changes') {
             steps {
                 script {
-                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                        stageResults['Setting version & push changes'] = 'SUCCESS'
+                    try {
                         dir('backend_app') {
-                            CURRENT_VERSION = sh(
+                            def CURRENT_VERSION = sh(
                                 script: 'mvn help:evaluate -Dexpression=revision -q -DforceStdout',
                                 returnStdout: true
                             ).trim()
 
                             def parts = CURRENT_VERSION.split('\\.')
                             def newPatch = (parts[2] as Integer) + 1
-                            NEXT_VERSION = "${parts[0]}.${parts[1]}.${newPatch}"
+                            def NEXT_VERSION = "${parts[0]}.${parts[1]}.${newPatch}"
+                            env.NEXT_VERSION = NEXT_VERSION
                             echo "Updating version: ${CURRENT_VERSION} → ${NEXT_VERSION}"
 
                             sh "mvn versions:set-property -Dproperty=revision -DnewVersion=${NEXT_VERSION}"
@@ -61,9 +58,10 @@ pipeline {
                                 '''
                             }
                         }
-                    }
-                    if (!stageResults.containsKey('Setting version & push changes')) {
+                        stageResults['Setting version & push changes'] = 'SUCCESS'
+                    } catch (e) {
                         stageResults['Setting version & push changes'] = 'FAILURE'
+                        throw e
                     }
                 }
             }
@@ -74,16 +72,16 @@ pipeline {
                 stage('Build & Test Frontend') {
                     steps {
                         script {
-                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                                stageResults['Build & Test Frontend'] = 'SUCCESS'
+                            try {
                                 dir('frontend') {
                                     sh 'npm ci'
                                     sh 'npm run build'
                                     sh 'xvfb-run npx ng test --watch=false --browsers=ChromeHeadlessNoSandbox'
                                 }
-                            }
-                            if (!stageResults.containsKey('Build & Test Frontend')) {
+                                stageResults['Build & Test Frontend'] = 'SUCCESS'
+                            } catch (e) {
                                 stageResults['Build & Test Frontend'] = 'FAILURE'
+                                throw e
                             }
                         }
                     }
@@ -95,15 +93,15 @@ pipeline {
                     }
                     steps {
                         script {
-                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                                stageResults['Build & Test Backend'] = 'SUCCESS'
+                            try {
                                 dir('backend_app') {
                                     sh 'mvn clean package -DskipTests=true'
                                     sh 'mvn test'
                                 }
-                            }
-                            if (!stageResults.containsKey('Build & Test Backend')) {
+                                stageResults['Build & Test Backend'] = 'SUCCESS'
+                            } catch (e) {
                                 stageResults['Build & Test Backend'] = 'FAILURE'
+                                throw e
                             }
                         }
                     }
@@ -116,8 +114,7 @@ pipeline {
                 stage('SonarQube Backend') {
                     steps {
                         script {
-                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                                stageResults['SonarQube Backend'] = 'SUCCESS'
+                            try {
                                 dir('backend_app') {
                                     withSonarQubeEnv('SonarQube') {
                                         sh '''
@@ -129,9 +126,10 @@ pipeline {
                                         waitForQualityGate abortPipeline: true
                                     }
                                 }
-                            }
-                            if (!stageResults.containsKey('SonarQube Backend')) {
+                                stageResults['SonarQube Backend'] = 'SUCCESS'
+                            } catch (e) {
                                 stageResults['SonarQube Backend'] = 'FAILURE'
+                                throw e
                             }
                         }
                     }
@@ -140,8 +138,7 @@ pipeline {
                 stage('SonarQube Frontend') {
                     steps {
                         script {
-                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                                stageResults['SonarQube Frontend'] = 'SUCCESS'
+                            try {
                                 dir('frontend') {
                                     withSonarQubeEnv('SonarQube') {
                                         sh '''
@@ -154,9 +151,10 @@ pipeline {
                                         waitForQualityGate abortPipeline: true
                                     }
                                 }
-                            }
-                            if (!stageResults.containsKey('SonarQube Frontend')) {
+                                stageResults['SonarQube Frontend'] = 'SUCCESS'
+                            } catch (e) {
                                 stageResults['SonarQube Frontend'] = 'FAILURE'
+                                throw e
                             }
                         }
                     }
@@ -169,12 +167,11 @@ pipeline {
                 stage('Upload backend to Nexus') {
                     steps {
                         script {
-                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                                stageResults['Upload Backend to Nexus'] = 'SUCCESS'
+                            try {
                                 dir('backend_app') {
                                     nexusArtifactUploader artifacts: [[
                                         artifactId: 'demo',
-                                        file: "target/demo-${NEXT_VERSION}.jar",
+                                        file: "target/demo-${env.NEXT_VERSION}.jar",
                                         type: 'jar'
                                     ]],
                                     credentialsId: 'nexus',
@@ -183,11 +180,12 @@ pipeline {
                                     nexusVersion: 'nexus3',
                                     protocol: 'http',
                                     repository: 'backend',
-                                    version: "${NEXT_VERSION}"
+                                    version: "${env.NEXT_VERSION}"
                                 }
-                            }
-                            if (!stageResults.containsKey('Upload Backend to Nexus')) {
-                                stageResults['Upload Backend to Nexus'] = 'FAILURE'
+                                stageResults['Upload backend to Nexus'] = 'SUCCESS'
+                            } catch (e) {
+                                stageResults['Upload backend to Nexus'] = 'FAILURE'
+                                throw e
                             }
                         }
                     }
@@ -196,14 +194,13 @@ pipeline {
                 stage('Upload Frontend to Nexus') {
                     steps {
                         script {
-                            catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                                stageResults['Upload Frontend to Nexus'] = 'SUCCESS'
+                            try {
                                 dir('frontend/dist') {
-                                    sh "tar -czf frontend-${NEXT_VERSION}.tar.gz *"
+                                    sh "tar -czf frontend-${env.NEXT_VERSION}.tar.gz *"
                                 }
                                 nexusArtifactUploader artifacts: [[
                                     artifactId: 'frontend',
-                                    file: "frontend/dist/frontend-${NEXT_VERSION}.tar.gz",
+                                    file: "frontend/dist/frontend-${env.NEXT_VERSION}.tar.gz",
                                     type: 'tar.gz'
                                 ]],
                                 credentialsId: 'nexus',
@@ -212,10 +209,11 @@ pipeline {
                                 nexusVersion: 'nexus3',
                                 protocol: 'http',
                                 repository: 'frontend',
-                                version: "${NEXT_VERSION}"
-                            }
-                            if (!stageResults.containsKey('Upload Frontend to Nexus')) {
+                                version: "${env.NEXT_VERSION}"
+                                stageResults['Upload Frontend to Nexus'] = 'SUCCESS'
+                            } catch (e) {
                                 stageResults['Upload Frontend to Nexus'] = 'FAILURE'
+                                throw e
                             }
                         }
                     }
@@ -226,24 +224,22 @@ pipeline {
         stage('Docker Build & Push via Ansible') {
             steps {
                 script {
-                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                        stageResults['Docker Build & Push via Ansible'] = 'SUCCESS'
-                        withCredentials([
-                            usernamePassword(
-                                credentialsId: 'docker',
-                                usernameVariable: 'DOCKER_USERNAME',
-                                passwordVariable: 'DOCKER_PASSWORD'
-                            )
-                        ]) {
+                    try {
+                        withCredentials([usernamePassword(
+                            credentialsId: 'docker',
+                            usernameVariable: 'DOCKER_USERNAME',
+                            passwordVariable: 'DOCKER_PASSWORD'
+                        )]) {
                             sh """
                                 ansible-playbook -vvv ansible/playbook-delivery.yml \
                                   -e build_context=${WORKSPACE} \
-                                  -e NEXT_VERSION=${NEXT_VERSION}
+                                  -e NEXT_VERSION=${env.NEXT_VERSION}
                             """
                         }
-                    }
-                    if (!stageResults.containsKey('Docker Build & Push via Ansible')) {
+                        stageResults['Docker Build & Push via Ansible'] = 'SUCCESS'
+                    } catch (e) {
                         stageResults['Docker Build & Push via Ansible'] = 'FAILURE'
+                        throw e
                     }
                 }
             }
@@ -252,17 +248,17 @@ pipeline {
         stage('Clean Old Docker Images & volumes') {
             steps {
                 script {
-                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                        stageResults['Clean Old Docker Images & Volumes'] = 'SUCCESS'
+                    try {
                         sh 'docker system prune -a -f --volumes'
                         sh 'docker image prune -f'
                         sh '''
                             docker images --filter=reference='basmaoueslati/*' --format '{{.ID}}' \
                             | xargs -r docker rmi -f
                         '''
-                    }
-                    if (!stageResults.containsKey('Clean Old Docker Images & Volumes')) {
-                        stageResults['Clean Old Docker Images & Volumes'] = 'FAILURE'
+                        stageResults['Clean Old Docker Images & volumes'] = 'SUCCESS'
+                    } catch (e) {
+                        stageResults['Clean Old Docker Images & volumes'] = 'FAILURE'
+                        throw e
                     }
                 }
             }
@@ -271,8 +267,7 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 script {
-                    catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                        stageResults['Deploy to Kubernetes'] = 'SUCCESS'
+                    try {
                         sh 'kubectl delete rs -n fullstackapp --all || true'
                         sh 'kubectl apply -f kubernetes/backend/backend-config.yaml -n fullstackapp'
                         sh 'kubectl apply -f kubernetes/frontend/frontend-config.yaml -n fullstackapp'
@@ -281,7 +276,7 @@ pipeline {
                             inventory: 'ansible/dev.ini',
                             credentialsId: 'ssh-jenkins-Masterk8s',
                             extras: """
-                                -e version=${NEXT_VERSION} \
+                                -e version=${env.NEXT_VERSION} \
                                 -e docker_registry=basmaoueslati
                             """
                         )
@@ -289,9 +284,10 @@ pipeline {
                             kubectl rollout -n fullstackapp status deployment/frontend --timeout=300s
                             kubectl rollout -n fullstackapp status deployment/backend --timeout=300s
                         '''
-                    }
-                    if (!stageResults.containsKey('Deploy to Kubernetes')) {
+                        stageResults['Deploy to Kubernetes'] = 'SUCCESS'
+                    } catch (e) {
                         stageResults['Deploy to Kubernetes'] = 'FAILURE'
+                        throw e
                     }
                 }
             }
@@ -301,23 +297,18 @@ pipeline {
     post {
         always {
             script {
-                def report = "Job '${env.JOB_NAME} [#${env.BUILD_NUMBER}]' finished with status: ${currentBuild.currentResult}\n\n"
-                report += "Stage Report:\n"
-                stageResults.each { stage, result ->
-                    report += "- ${stage}: ${result}\n"
+                def report = "Build #${env.BUILD_NUMBER} - ${env.JOB_NAME} finished with status: ${currentBuild.currentResult}\n\n"
+                report += "Stage Summary:\n"
+                stageResults.each { name, result ->
+                    report += "- ${name}: ${result}\n"
                 }
 
                 emailext(
-                    subject: "Jenkins Job Report - ${currentBuild.currentResult}",
+                    subject: "Jenkins Build #${env.BUILD_NUMBER} Status: ${currentBuild.currentResult}",
                     body: report,
                     to: 'oueslatibasma2020@gmail.com'
                 )
             }
         }
-    }
-
-    // Declare this outside any stage
-    environment {
-        stageResults = [:]
     }
 }
