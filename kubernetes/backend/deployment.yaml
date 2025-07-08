@@ -34,16 +34,16 @@ spec:
         - configMapRef:
             name: backend-config
         env:
-          - name: DB_USER
-            valueFrom:
-              secretKeyRef:
-                name: mysql-secrets
-                key: username
-          - name: DB_PASSWORD
-            valueFrom:
-              secretKeyRef:
-                name: mysql-secrets
-                key: password
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secrets
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mysql-secrets
+              key: password
         resources:
           requests:
             cpu: "500m"
@@ -51,6 +51,12 @@ spec:
           limits:
             cpu: "1000m"
             memory: "1Gi"
+        startupProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          failureThreshold: 30
+          periodSeconds: 5
         livenessProbe:
           httpGet:
             path: /actuator/health
