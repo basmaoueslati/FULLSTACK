@@ -205,7 +205,7 @@ pipeline {
                 '''
             }
         }
- 
+ }
 post {
     always {
         emailext(
@@ -215,5 +215,5 @@ post {
         )
     }
 }
-}
+
 }
