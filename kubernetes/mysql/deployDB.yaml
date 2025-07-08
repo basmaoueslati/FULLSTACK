@@ -45,10 +45,22 @@
         msg: "Secrets already exist — keeping existing passwords"
       when: mysql_secret_info.resources | length > 0
 
-    - name: Create standard StorageClass (if not exists)
+    - name: Create init.sql ConfigMap
       k8s:
         state: present
-        definition: "{{ lookup('file', playbook_dir + '/standard-storageclass.yaml') | from_yaml }}"
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: mysql-initdb
+            namespace: "{{ kube_namespace }}"
+          data:
+            init.sql: |
+              CREATE DATABASE IF NOT EXISTS {{ mysql_database_name | default('mydb') }};
+
+              CREATE USER IF NOT EXISTS '{{ mysql_app_user }}'@'%' IDENTIFIED BY '{{ mysql_app_password }}';
+              GRANT ALL PRIVILEGES ON {{ mysql_database_name | default('mydb') }}.* TO '{{ mysql_app_user }}'@'%';
+              FLUSH PRIVILEGES;
 
     - name: Check if PersistentVolume already exists
       k8s_info:
@@ -103,8 +115,8 @@
               tier: database
           spec:
             ports:
-            - port: 3306
-              targetPort: 3306
+              - port: 3306
+                targetPort: 3306
             selector:
               app: fullstack
               tier: database
@@ -137,54 +149,60 @@
                   tier: database
               spec:
                 containers:
-                - name: mysql
-                  image: "mysql:{{ mysql_version | default('8.0') }}"
-                  ports:
-                  - containerPort: 3306
-                  env:
-                    - name: MYSQL_ROOT_PASSWORD
-                      valueFrom:
-                        secretKeyRef:
-                          name: mysql-secrets
-                          key: root-password
-                    - name: MYSQL_DATABASE
-                      value: "{{ mysql_database_name | default('mydb') }}"
-                    - name: MYSQL_USER
-                      valueFrom:
-                        secretKeyRef:
-                          name: mysql-secrets
-                          key: username
-                    - name: MYSQL_PASSWORD
-                      valueFrom:
-                        secretKeyRef:
-                          name: mysql-secrets
-                          key: password
-                  volumeMounts:
-                  - name: mysql-persistent-storage
-                    mountPath: /var/lib/mysql
-                  resources:
-                    requests:
-                      cpu: "{{ mysql_cpu_request | default('500m') }}"
-                      memory: "{{ mysql_memory_request | default('1Gi') }}"
-                    limits:
-                      cpu: "{{ mysql_cpu_limit | default('1000m') }}"
-                      memory: "{{ mysql_memory_limit | default('2Gi') }}"
-                  livenessProbe:
-                    exec:
-                      command: [ "mysqladmin", "ping" ]
-                    initialDelaySeconds: 30
-                    periodSeconds: 10
-                    timeoutSeconds: 5
-                  readinessProbe:
-                    exec:
-                      command: [ "mysqladmin", "ping" ]
-                    initialDelaySeconds: 5
-                    periodSeconds: 5
-                    timeoutSeconds: 3
+                  - name: mysql
+                    image: "mysql:{{ mysql_version | default('8.0') }}"
+                    ports:
+                      - containerPort: 3306
+                    env:
+                      - name: MYSQL_ROOT_PASSWORD
+                        valueFrom:
+                          secretKeyRef:
+                            name: mysql-secrets
+                            key: root-password
+                      - name: MYSQL_DATABASE
+                        value: "{{ mysql_database_name | default('mydb') }}"
+                      - name: MYSQL_USER
+                        valueFrom:
+                          secretKeyRef:
+                            name: mysql-secrets
+                            key: username
+                      - name: MYSQL_PASSWORD
+                        valueFrom:
+                          secretKeyRef:
+                            name: mysql-secrets
+                            key: password
+                    volumeMounts:
+                      - name: mysql-persistent-storage
+                        mountPath: /var/lib/mysql
+                      - name: init-script
+                        mountPath: /docker-entrypoint-initdb.d/init.sql
+                        subPath: init.sql
+                    resources:
+                      requests:
+                        cpu: "{{ mysql_cpu_request | default('500m') }}"
+                        memory: "{{ mysql_memory_request | default('1Gi') }}"
+                      limits:
+                        cpu: "{{ mysql_cpu_limit | default('1000m') }}"
+                        memory: "{{ mysql_memory_limit | default('2Gi') }}"
+                    livenessProbe:
+                      exec:
+                        command: [ "mysqladmin", "ping" ]
+                      initialDelaySeconds: 30
+                      periodSeconds: 10
+                      timeoutSeconds: 5
+                    readinessProbe:
+                      exec:
+                        command: [ "mysqladmin", "ping" ]
+                      initialDelaySeconds: 5
+                      periodSeconds: 5
+                      timeoutSeconds: 3
                 volumes:
-                - name: mysql-persistent-storage
-                  persistentVolumeClaim:
-                    claimName: mysql-pvc
+                  - name: mysql-persistent-storage
+                    persistentVolumeClaim:
+                      claimName: mysql-pvc
+                  - name: init-script
+                    configMap:
+                      name: mysql-initdb
 
     - name: Verify MySQL deployment
       command: >
