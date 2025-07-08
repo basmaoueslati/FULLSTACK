@@ -183,3 +183,41 @@
       register: rollout_result
       failed_when: rollout_result.rc != 0
       changed_when: false
+          - name: Run one-time Job to update MySQL root password
+      k8s:
+        state: present
+        definition:
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: update-mysql-root
+            namespace: "{{ kube_namespace }}"
+          spec:
+            backoffLimit: 1
+            template:
+              spec:
+                restartPolicy: OnFailure
+                containers:
+                  - name: mysql-client
+                    image: "mysql:{{ mysql_version | default('8.0') }}"
+                    env:
+                      - name: MYSQL_HOST
+                        value: mysql-service
+                      - name: MYSQL_ROOT_PASSWORD
+                        value: "{{ old_mysql_root_password }}"
+                      - name: NEW_MYSQL_ROOT_PASSWORD
+                        value: "{{ mysql_root_password }}"
+                    command:
+                      - sh
+                      - -c
+                      - |
+                        mysql -h $MYSQL_HOST -u root -p$MYSQL_ROOT_PASSWORD \
+                          -e "ALTER USER 'root'@'%' IDENTIFIED BY '$NEW_MYSQL_ROOT_PASSWORD'; FLUSH PRIVILEGES;"
+    - name: Delete MySQL password update job
+      k8s:
+        api_version: batch/v1
+        kind: Job
+        name: update-mysql-root
+        namespace: "{{ kube_namespace }}"
+        state: absent
+
