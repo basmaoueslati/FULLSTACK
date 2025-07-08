@@ -294,21 +294,56 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            script {
-                def report = "Build #${env.BUILD_NUMBER} - ${env.JOB_NAME} finished with status: ${currentBuild.currentResult}\n\n"
-                report += "Stage Summary:\n"
-                stageResults.each { name, result ->
-                    report += "- ${name}: ${result}\n"
-                }
+post {
+    always {
+        script {
+            def color = currentBuild.currentResult == 'SUCCESS' ? 'green' : 'red'
 
-                emailext(
-                    subject: "Jenkins Build #${env.BUILD_NUMBER} Status: ${currentBuild.currentResult}",
-                    body: report,
-                    to: 'oueslatibasma2020@gmail.com'
-                )
+            def report = """
+                <html>
+                  <body>
+                    <h2 style="color:${color};">Build #${env.BUILD_NUMBER} - ${env.JOB_NAME}</h2>
+                    <p>Status: <strong style="color:${color};">${currentBuild.currentResult}</strong></p>
+
+                    <h3>Stage Summary</h3>
+                    <table border="1" cellpadding="6" cellspacing="0" style="border-collapse: collapse;">
+                      <thead style="background-color: #f2f2f2;">
+                        <tr>
+                          <th>Stage</th>
+                          <th>Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+            """
+
+            stageResults.each { stage, status ->
+                def rowColor = status == 'SUCCESS' ? '#d4edda' : '#f8d7da'
+                report += """
+                    <tr style="background-color: ${rowColor};">
+                      <td>${stage}</td>
+                      <td><strong>${status}</strong></td>
+                    </tr>
+                """
             }
+
+            report += """
+                      </tbody>
+                    </table>
+
+                    <br/>
+                    <p>Check Jenkins for full logs.</p>
+                  </body>
+                </html>
+            """
+
+            emailext(
+                subject: "Build #${env.BUILD_NUMBER} - ${env.JOB_NAME} - ${currentBuild.currentResult}",
+                body: report,
+                mimeType: 'text/html',
+                to: 'oueslatibasma2020@gmail.com'
+            )
         }
     }
+}
+
 }
