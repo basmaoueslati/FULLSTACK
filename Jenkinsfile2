@@ -206,19 +206,14 @@ pipeline {
             }
         }
  
-
-         stage('Notification') {
-            steps {
-                echo "Success"
-            }
-            post {
-                always {
-                    sendStageNotification(
-                        recipient: 'oueslatibasma2020@gmail.com',
-                        stageName: 'Project without helm Successfully deployed'
-                    )
-                }
-            }
+post {
+    always {
+        emailext(
+            subject: "Jenkins Job Notification",
+            body: "Job '${env.JOB_NAME} [#${env.BUILD_NUMBER}]' finished with status: ${currentBuild.currentResult}",
+            to: 'oueslatibasma2020@gmail.com'
+        )
+    }
 }
 }
 }
