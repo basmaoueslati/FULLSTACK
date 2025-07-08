@@ -113,7 +113,8 @@ pipeline {
                 }
             }
         }
-
+        stage('Upload to Nexus') {
+            parallel {
         stage('Upload backend to Nexus') {
             steps {
                 dir('backend_app') {
@@ -152,11 +153,7 @@ pipeline {
                 version: "${NEXT_VERSION}"
             }
         }
-
-        stage('Pre-Build Docker Cleanup') {
-            steps {
-                sh 'docker system prune -a -f --volumes'
-            }
+        }
         }
 
         stage('Docker Build & Push via Ansible') {
@@ -177,8 +174,9 @@ pipeline {
             }
         }
 
-        stage('Clean Old Docker Images') {
+        stage('Clean Old Docker Images & volumes') {
             steps {
+                sh 'docker system prune -a -f --volumes'
                 sh 'docker image prune -f'
                 sh '''
                     docker images --filter=reference='basmaoueslati/*' --format '{{.ID}}' \
@@ -187,19 +185,9 @@ pipeline {
             }
         }
 
-        stage('Clean Old Kubernetes Replicas') {
-            steps {
-                sh '''
-                    kubectl delete rs -n fullstackapp --all || true
-                '''
-            }
-        }
-
         stage('Deploy to Kubernetes') {
-            when {
-                branch 'main'
-            }
             steps {
+                sh 'kubectl delete rs -n fullstackapp --all || true'
                 sh 'kubectl apply -f kubernetes/backend/backend-config.yaml -n fullstackapp'
                 sh 'kubectl apply -f kubernetes/frontend/frontend-config.yaml -n fullstackapp'
                 ansiblePlaybook(
@@ -219,12 +207,17 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            sh 'docker rm -f mysql-test || true'
-        }
-        failure {
-            slackSend channel: '#alerts', message: "Build ${currentBuild.currentResult}: ${env.JOB_NAME} #${env.BUILD_NUMBER}"
-        }
-    }
+         stage('Notification') {
+            steps {
+                echo "Success"
+            }
+            post {
+                always {
+                    sendStageNotification(
+                        recipient: 'oueslatibasma2020@gmail.com',
+                        stageName: 'Project without helm Successfully deployed'
+                    )
+                }
+            }
+}
 }
