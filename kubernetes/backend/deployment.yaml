@@ -33,6 +33,17 @@ spec:
             name: backend-secrets
         - configMapRef:
             name: backend-config
+        env:
+          - name: DB_USER
+            valueFrom:
+              secretKeyRef:
+                name: mysql-secrets
+                key: username
+          - name: DB_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mysql-secrets
+                key: password
         resources:
           requests:
             cpu: "500m"
@@ -49,7 +60,6 @@ spec:
           periodSeconds: 10
           timeoutSeconds: 2
           failureThreshold: 5
-
         readinessProbe:
           httpGet:
             path: /actuator/health
