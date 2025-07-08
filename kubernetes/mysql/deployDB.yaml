@@ -4,7 +4,7 @@
   vars_files:
     - "{{ inventory_dir }}/../group_vars/all.yml"
     - "{{ inventory_dir }}/../group_vars/{{ environment }}.yml"
-  
+
   tasks:
     - name: Ensure namespace exists
       k8s:
@@ -26,6 +26,7 @@
           data:
             root-password: "{{ (mysql_root_password | string) | b64encode }}"
             username: "{{ (mysql_app_user | string) | b64encode }}"
+            password: "{{ (mysql_app_password | string) | b64encode }}"
 
     - name: Create standard StorageClass (if not exists)
       k8s:
@@ -36,7 +37,7 @@
       k8s:
         state: present
         definition: "{{ lookup('file', playbook_dir + '/mysql-pv.yaml') | from_yaml }}"
-        
+
     - name: Deploy MySQL PVC
       kubernetes.core.k8s:
         state: present
