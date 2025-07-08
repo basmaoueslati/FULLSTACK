@@ -113,47 +113,48 @@ pipeline {
                 }
             }
         }
+
         stage('Upload to Nexus') {
             parallel {
-        stage('Upload backend to Nexus') {
-            steps {
-                dir('backend_app') {
-                    nexusArtifactUploader artifacts: [[
-                        artifactId: 'demo',
-                        file: "target/demo-${NEXT_VERSION}.jar",
-                        type: 'jar'
-                    ]],
-                    credentialsId: 'nexus',
-                    groupId: 'com.example',
-                    nexusUrl: '51.44.223.62:8081',
-                    nexusVersion: 'nexus3',
-                    protocol: 'http',
-                    repository: 'backend',
-                    version: "${NEXT_VERSION}"
+                stage('Upload backend to Nexus') {
+                    steps {
+                        dir('backend_app') {
+                            nexusArtifactUploader artifacts: [[
+                                artifactId: 'demo',
+                                file: "target/demo-${NEXT_VERSION}.jar",
+                                type: 'jar'
+                            ]],
+                            credentialsId: 'nexus',
+                            groupId: 'com.example',
+                            nexusUrl: '51.44.223.62:8081',
+                            nexusVersion: 'nexus3',
+                            protocol: 'http',
+                            repository: 'backend',
+                            version: "${NEXT_VERSION}"
+                        }
+                    }
                 }
-            }
-        }
 
-        stage('Upload Frontend to Nexus') {
-            steps {
-                dir('frontend/dist') {
-                    sh "tar -czf frontend-${NEXT_VERSION}.tar.gz *"
+                stage('Upload Frontend to Nexus') {
+                    steps {
+                        dir('frontend/dist') {
+                            sh "tar -czf frontend-${NEXT_VERSION}.tar.gz *"
+                        }
+                        nexusArtifactUploader artifacts: [[
+                            artifactId: 'frontend',
+                            file: "frontend/dist/frontend-${NEXT_VERSION}.tar.gz",
+                            type: 'tar.gz'
+                        ]],
+                        credentialsId: 'nexus',
+                        groupId: 'com.example.frontend',
+                        nexusUrl: '51.44.223.62:8081',
+                        nexusVersion: 'nexus3',
+                        protocol: 'http',
+                        repository: 'frontend',
+                        version: "${NEXT_VERSION}"
+                    }
                 }
-                nexusArtifactUploader artifacts: [[
-                    artifactId: 'frontend',
-                    file: "frontend/dist/frontend-${NEXT_VERSION}.tar.gz",
-                    type: 'tar.gz'
-                ]],
-                credentialsId: 'nexus',
-                groupId: 'com.example.frontend',
-                nexusUrl: '51.44.223.62:8081',
-                nexusVersion: 'nexus3',
-                protocol: 'http',
-                repository: 'frontend',
-                version: "${NEXT_VERSION}"
             }
-        }
-        }
         }
 
         stage('Docker Build & Push via Ansible') {
@@ -205,15 +206,15 @@ pipeline {
                 '''
             }
         }
- }
-post {
-    always {
-        emailext(
-            subject: "Jenkins Job Notification",
-            body: "Job '${env.JOB_NAME} [#${env.BUILD_NUMBER}]' finished with status: ${currentBuild.currentResult}",
-            to: 'oueslatibasma2020@gmail.com'
-        )
     }
-}
 
+    post {
+        always {
+            emailext(
+                subject: "Jenkins Job Notification",
+                body: "Job '${env.JOB_NAME} [#${env.BUILD_NUMBER}]' finished with status: ${currentBuild.currentResult}",
+                to: 'oueslatibasma2020@gmail.com'
+            )
+        }
+    }
 }
