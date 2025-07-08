@@ -30,7 +30,7 @@ spec:
         - containerPort: 80
         env:
         - name: API_BASE_URL
-          value: "http://backend-service.{{ namespace | default('default') }}.svc.cluster.local:8080"
+          value: "http://backend-service.fullstackapp.svc.cluster.local:8080"
         resources:
           requests:
             cpu: "300m"
