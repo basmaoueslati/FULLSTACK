@@ -64,14 +64,14 @@
         definition: "{{ lookup('file', playbook_dir + '/mysql-pv.yaml') | from_yaml }}"
       when: mysql_pv_info.resources | length == 0
 
-    - name: Check if PVC already exists
-      k8s_info:
+    - name: Delete MySQL PVC
+      k8s:
         kind: PersistentVolumeClaim
-        namespace: "{{ kube_namespace }}"
         name: mysql-pvc
-      register: mysql_pvc_info
-      failed_when: false
-      changed_when: false
+        namespace: "{{ kube_namespace }}"
+        state: absent
+        wait: yes
+        ignore_errors: yes
 
     - name: Deploy MySQL PVC if not exists
       k8s:
@@ -184,41 +184,4 @@
       failed_when: rollout_result.rc != 0
       changed_when: false
 
-    - name: Run one-time Job to update MySQL root password
-      k8s:
-        state: present
-        definition:
-          apiVersion: batch/v1
-          kind: Job
-          metadata:
-            name: update-mysql-root
-            namespace: "{{ kube_namespace }}"
-          spec:
-            backoffLimit: 1
-            template:
-              spec:
-                restartPolicy: OnFailure
-                containers:
-                  - name: mysql-client
-                    image: "mysql:{{ mysql_version | default('8.0') }}"
-                    env:
-                      - name: MYSQL_HOST
-                        value: mysql-service
-                      - name: MYSQL_ROOT_PASSWORD
-                        value: "{{ old_mysql_root_password }}"
-                      - name: NEW_MYSQL_ROOT_PASSWORD
-                        value: "{{ mysql_root_password }}"
-                    command:
-                      - sh
-                      - -c
-                      - |
-                        mysql -h $MYSQL_HOST -u root -p$MYSQL_ROOT_PASSWORD \
-                        -e "ALTER USER 'root'@'%' IDENTIFIED BY '$NEW_MYSQL_ROOT_PASSWORD'; FLUSH PRIVILEGES;"
 
-    - name: Delete MySQL password update job
-      k8s:
-        api_version: batch/v1
-        kind: Job
-        name: update-mysql-root
-        namespace: "{{ kube_namespace }}"
-        state: absent
