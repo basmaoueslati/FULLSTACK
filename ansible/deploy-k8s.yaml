@@ -1,5 +1,5 @@
 ---
-- import_playbook: ../kubernetes/mysql/mysal-deployment.yaml
+- import_playbook: ../kubernetes/mysql/mysql-deployment.yaml
 
 - name: Deploy fullstack app to Kubernetes
   hosts: localhost
