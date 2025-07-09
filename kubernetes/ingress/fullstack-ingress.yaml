@@ -3,8 +3,9 @@ kind: Ingress
 metadata:
   name: fullstack-ingress
   namespace: fullstackapp
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /customers
 spec:
-  ingressClassName: nginx
   rules:
     - host: backend.devops.com
       http:
