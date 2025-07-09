@@ -4,7 +4,7 @@ metadata:
   name: fullstack-ingress
   namespace: fullstackapp
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/rewrite-target: /customers
 spec:
   rules:
     - host: backend.devops.com
