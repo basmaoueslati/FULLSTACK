@@ -195,17 +195,17 @@
                     configMap:
                       name: mysql-initdb
 
-    - name: Verify MySQL deployment
-      command: >
-        kubectl rollout -n {{ kube_namespace }} status deployment/mysql --timeout=300s
-      register: rollout_result
-      failed_when: rollout_result.rc != 0
+    - name: Wait for MySQL deployment to be ready
+      command: kubectl rollout status deployment/mysql -n "{{ kube_namespace }}" --timeout=300s
+      register: mysql_rollout_status
+      failed_when: mysql_rollout_status.rc != 0
       changed_when: false
+
     - name: Get MySQL pod name
       shell: kubectl get pod -n {{ kube_namespace }} -l app=fullstack,tier=database -o jsonpath="{.items[0].metadata.name}"
       register: mysql_pod_name
       changed_when: false
-    
+
     - name: Try connecting to MySQL as root
       shell: >
         kubectl exec -n {{ kube_namespace }} {{ mysql_pod_name.stdout }} -- 
@@ -213,12 +213,12 @@
       register: mysql_root_check
       failed_when: false
       changed_when: false
-    
+
     - name: Skip user creation if root password is invalid
       debug:
         msg: "⚠️ Unable to connect to MySQL as root. Skipping manual user creation step."
       when: "'Access denied' in mysql_root_check.stderr or mysql_root_check.rc != 0"
-    
+
     - name: Create app user manually if root access works
       shell: >
         kubectl exec -n {{ kube_namespace }} {{ mysql_pod_name.stdout }} -- 
@@ -227,4 +227,3 @@
         GRANT ALL PRIVILEGES ON {{ mysql_database_name | default('mydb') }}.* TO '{{ mysql_app_user }}'@'%';
         FLUSH PRIVILEGES;"
       when: "'Access denied' not in mysql_root_check.stderr and mysql_root_check.rc == 0"
-
