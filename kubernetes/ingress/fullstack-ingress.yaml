@@ -3,23 +3,28 @@ kind: Ingress
 metadata:
   name: fullstack-ingress
   namespace: fullstackapp
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      rewrite ^(/.*)$ /index.html break;
 spec:
   rules:
     - host: frontend.devops.com
       http:
         paths:
-          - path: /
-            pathType: Prefix
+          - path: /.*
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: frontend-service
                 port:
                   number: 80
+
     - host: backend.devops.com
       http:
         paths:
-          - path: /
-            pathType: Prefix
+          - path: /.*   # OR "/" if you don't want regex here
+            pathType: ImplementationSpecific
             backend:
               service:
                 name: backend-service
