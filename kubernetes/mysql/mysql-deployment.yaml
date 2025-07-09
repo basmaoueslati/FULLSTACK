@@ -43,18 +43,14 @@ spec:
                   key: password
           livenessProbe:
             exec:
-              command:
-                - mysqladmin
-                - ping
+              command: ["mysqladmin", "ping"]
             initialDelaySeconds: 30
             periodSeconds: 10
             timeoutSeconds: 5
             failureThreshold: 3
           readinessProbe:
             exec:
-              command:
-                - mysqladmin
-                - ping
+              command: ["mysqladmin", "ping"]
             initialDelaySeconds: 5
             periodSeconds: 5
             timeoutSeconds: 3
