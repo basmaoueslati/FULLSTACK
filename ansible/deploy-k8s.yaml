@@ -4,6 +4,7 @@
 - name: Deploy fullstack app to Kubernetes
   hosts: localhost
   connection: local
+
   tasks:
     - name: Deploy backend
       kubernetes.core.k8s:
@@ -28,3 +29,9 @@
         state: present
         namespace: "{{ kube_namespace }}"
         definition: "{{ lookup('template', '../kubernetes/frontend/service.yaml') | from_yaml }}"
+
+    - name: Deploy Ingress
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ kube_namespace }}"
+        definition: "{{ lookup('file', '../kubernetes/ingress/fullstack-ingress.yaml') | from_yaml }}"
