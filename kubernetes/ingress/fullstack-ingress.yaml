@@ -4,18 +4,14 @@ metadata:
   name: fullstack-ingress
   namespace: fullstackapp
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/use-regex: "true"
-    nginx.ingress.kubernetes.io/configuration-snippet: |
-      rewrite ^(/customers.*)$ /index.html break;
-      rewrite ^(/add.*)$ /index.html break;
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   rules:
     - host: frontend.devops.com
       http:
         paths:
-          - path: /(.*)
-            pathType: ImplementationSpecific
+          - path: /
+            pathType: Prefix
             backend:
               service:
                 name: frontend-service
@@ -25,8 +21,8 @@ spec:
     - host: backend.devops.com
       http:
         paths:
-          - path: /.*  # Pour l'API REST
-            pathType: ImplementationSpecific
+          - path: /
+            pathType: Prefix
             backend:
               service:
                 name: backend-service
