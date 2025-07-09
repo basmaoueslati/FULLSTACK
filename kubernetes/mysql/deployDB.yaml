@@ -205,16 +205,26 @@
       shell: kubectl get pod -n {{ kube_namespace }} -l app=fullstack,tier=database -o jsonpath="{.items[0].metadata.name}"
       register: mysql_pod_name
       changed_when: false
-    - name: Skip user creation if credentials fail
-      block:
-        - name: Create app user manually if needed
-          command: >
-            kubectl exec -n {{ kube_namespace }} {{ mysql_pod_name.stdout }} -- 
-            mysql -uroot -p{{ mysql_root_password }} -e "
-            CREATE USER IF NOT EXISTS '{{ mysql_app_user }}'@'%' IDENTIFIED BY '{{ mysql_app_password }}';
-            GRANT ALL PRIVILEGES ON {{ mysql_database_name | default('mydb') }}.* TO '{{ mysql_app_user }}'@'%';
-            FLUSH PRIVILEGES;"
-      rescue:
-        - name: User creation skipped due to root access denied
-          debug:
-            msg: "Root login failed — keeping existing MySQL state."
+    
+    - name: Try connecting to MySQL as root
+      shell: >
+        kubectl exec -n {{ kube_namespace }} {{ mysql_pod_name.stdout }} -- 
+        mysql -uroot -p{{ mysql_root_password }} -e "SELECT 1;"
+      register: mysql_root_check
+      failed_when: false
+      changed_when: false
+    
+    - name: Skip user creation if root password is invalid
+      debug:
+        msg: "⚠️ Unable to connect to MySQL as root. Skipping manual user creation step."
+      when: "'Access denied' in mysql_root_check.stderr or mysql_root_check.rc != 0"
+    
+    - name: Create app user manually if root access works
+      shell: >
+        kubectl exec -n {{ kube_namespace }} {{ mysql_pod_name.stdout }} -- 
+        mysql -uroot -p{{ mysql_root_password }} -e "
+        CREATE USER IF NOT EXISTS '{{ mysql_app_user }}'@'%' IDENTIFIED BY '{{ mysql_app_password }}';
+        GRANT ALL PRIVILEGES ON {{ mysql_database_name | default('mydb') }}.* TO '{{ mysql_app_user }}'@'%';
+        FLUSH PRIVILEGES;"
+      when: "'Access denied' not in mysql_root_check.stderr and mysql_root_check.rc == 0"
+
