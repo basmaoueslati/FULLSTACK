@@ -201,9 +201,14 @@
       register: rollout_result
       failed_when: rollout_result.rc != 0
       changed_when: false
+    - name: Get MySQL pod name
+      shell: kubectl get pod -n {{ kube_namespace }} -l app=fullstack,tier=database -o jsonpath="{.items[0].metadata.name}"
+      register: mysql_pod_name
+      changed_when: false
     - name: Create app user manually if needed
       command: >
-        kubectl exec -n {{ kube_namespace }} deployment/mysql -- mysql -uroot -p{{ mysql_root_password }} -e "
+        kubectl exec -n {{ kube_namespace }} {{ mysql_pod_name.stdout }} -- 
+        mysql -uroot -p{{ mysql_root_password }} -e "
         CREATE USER IF NOT EXISTS '{{ mysql_app_user }}'@'%' IDENTIFIED BY '{{ mysql_app_password }}';
         GRANT ALL PRIVILEGES ON {{ mysql_database_name | default('mydb') }}.* TO '{{ mysql_app_user }}'@'%';
         FLUSH PRIVILEGES;"
