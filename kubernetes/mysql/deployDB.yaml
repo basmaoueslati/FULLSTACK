@@ -76,15 +76,6 @@
         definition: "{{ lookup('file', playbook_dir + '/mysql-pv.yaml') | from_yaml }}"
       when: mysql_pv_info.resources | length == 0
 
-    - name: Delete MySQL PVC (if exists)
-      k8s:
-        kind: PersistentVolumeClaim
-        name: mysql-pvc
-        namespace: "{{ kube_namespace }}"
-        state: absent
-        wait: yes
-      ignore_errors: yes
-
     - name: Check if MySQL PVC already exists
       k8s_info:
         kind: PersistentVolumeClaim
