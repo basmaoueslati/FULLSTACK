@@ -1,6 +1,6 @@
 # Global Settings
 kube_namespace: "fullstackapp"
-docker_registry: "51.44.166.2"
+# docker_registry: "51.44.166.2"
 
 # MySQL Configuration
 mysql_version: "8.0"
