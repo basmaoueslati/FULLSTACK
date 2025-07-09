@@ -7,19 +7,20 @@ metadata:
     nginx.ingress.kubernetes.io/rewrite-target: /$2
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
+  ingressClassName: nginx
   rules:
     - host: frontend.devops.com
       http:
         paths:
-          - path: /()(.*)
-            pathType: ImplementationSpecific
+          - path: /()
+            pathType: Prefix
             backend:
               service:
                 name: frontend-service
                 port:
                   number: 80
-          - path: /customers(/|$)(.*)
-            pathType: ImplementationSpecific
+          - path: /customers
+            pathType: Prefix
             backend:
               service:
                 name: backend-service
@@ -29,8 +30,8 @@ spec:
     - host: backend.devops.com
       http:
         paths:
-          - path: /()(.*)
-            pathType: ImplementationSpecific
+          - path: /()
+            pathType: Prefix
             backend:
               service:
                 name: backend-service
