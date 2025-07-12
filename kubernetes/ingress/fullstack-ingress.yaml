@@ -22,7 +22,7 @@ spec:
     - host: backend.devops.com
       http:
         paths:
-          - path: /customers
+          - path: /
             pathType: Prefix
             backend:
               service:
