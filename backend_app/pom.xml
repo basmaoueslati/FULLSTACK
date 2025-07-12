@@ -18,7 +18,7 @@
 
     <properties>
         <java.version>17</java.version>
-        <revision>0.0.133</revision> <!-- Default version -->
+        <revision>0.0.134</revision> <!-- Default version -->
     </properties>
 
     <dependencies>
