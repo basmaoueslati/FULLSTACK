@@ -3,7 +3,7 @@ def stageResults = [:]
 pipeline {
     agent any
     environment {
-        DOCKER_REGISTRY = '13.38.113.210:8081'
+        DOCKER_REGISTRY = '15.237.209.179:8081'
         KUBE_NAMESPACE = 'fullstackapp'
         REPO_URL = "git@github.com:basmaoueslati/FULLSTACK.git"
         BRANCH_NAME = "main"
@@ -153,7 +153,7 @@ pipeline {
                                     ]],
                                     credentialsId: 'nexus',
                                     groupId: 'com.example',
-                                    nexusUrl: '13.38.113.210:8081',
+                                    nexusUrl: '15.237.209.179:8081',
                                     nexusVersion: 'nexus3',
                                     protocol: 'http',
                                     repository: 'backend',
@@ -182,7 +182,7 @@ pipeline {
                                 ]],
                                 credentialsId: 'nexus',
                                 groupId: 'com.example.frontend',
-                                nexusUrl: '13.38.113.210:8081',
+                                nexusUrl: '15.237.209.179:8081',
                                 nexusVersion: 'nexus3',
                                 protocol: 'http',
                                 repository: 'frontend',
