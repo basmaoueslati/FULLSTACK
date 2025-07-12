@@ -14,7 +14,7 @@ export interface Customer {
 
 export class CustomerService {
 
-  private apiUrl = 'backend.devops.com/customers';
+  private apiUrl = 'http://backend.devops.com/customers';
 
   constructor(private http: HttpClient) {}
 
