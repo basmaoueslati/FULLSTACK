@@ -4,7 +4,6 @@ metadata:
   name: fullstack-ingress
   namespace: fullstackapp
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
 spec:
   ingressClassName: nginx
