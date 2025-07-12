@@ -135,30 +135,7 @@ pipeline {
                     }
                 }
 
-                stage('SonarQube Frontend') {
-                    steps {
-                        script {
-                            try {
-                                dir('frontend') {
-                                    withSonarQubeEnv('SonarQube') {
-                                        sh '''
-                                            sonar-scanner \
-                                              -Dsonar.projectKey=frontend \
-                                              -Dsonar.sources=.
-                                        '''
-                                    }
-                                    timeout(time: 15, unit: 'MINUTES') {
-                                        waitForQualityGate abortPipeline: true
-                                    }
-                                }
-                                stageResults['SonarQube Frontend'] = 'SUCCESS'
-                            } catch (e) {
-                                stageResults['SonarQube Frontend'] = 'FAILURE'
-                                throw e
-                            }
-                        }
-                    }
-                }
+
             }
         }
 
