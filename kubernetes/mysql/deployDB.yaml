@@ -216,7 +216,7 @@
 
     - name: Skip user creation if root password is invalid
       debug:
-        msg: "⚠️ Unable to connect to MySQL as root. Skipping manual user creation step."
+        msg: " Unable to connect to MySQL as root. Skipping manual user creation step."
       when: "'Access denied' in mysql_root_check.stderr or mysql_root_check.rc != 0"
 
     - name: Create app user manually if root access works
