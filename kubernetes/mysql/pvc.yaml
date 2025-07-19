@@ -12,5 +12,5 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 5Gi  # Adjust based on your needs
-  storageClassName: standard # Modify if using a specific storage class
+      storage: 5Gi  
+  storageClassName: standard 
