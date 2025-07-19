@@ -14,4 +14,4 @@ spec:
   selector:
     app: fullstack
     tier: database
-  clusterIP: None  # Important for StatefulSets, optional here
+  clusterIP: None 
